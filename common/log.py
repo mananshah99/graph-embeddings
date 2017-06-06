@@ -11,3 +11,4 @@ def default_logging(name):
     logger.addHandler(fh)
     logger.addHandler(ch)
     logger.setLevel(logging.DEBUG)
+    return logger
