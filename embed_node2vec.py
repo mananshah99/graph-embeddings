@@ -1,9 +1,6 @@
 '''
 embeds an unweighted, undirected graph with node2vec
 '''
-# os command
-# ../common/node2vec -i:[input edgelist] -o:[output embedding] -v [verbose] -w [weighted] 
-
 import os
 import sys
 import subprocess
@@ -38,11 +35,16 @@ progress = tqdm(total = count_files(settings.INDIVIDUAL_UW_GRAPH_DIR))
 
 for f in os.listdir(settings.INDIVIDUAL_UW_GRAPH_DIR):
     name = f.split('/')[-1].split('.')[0]
+    if os.path.isfile(settings.INDIVIDUAL_UW_N2V_DIR + '/' + name + '.emb'):
+        progress.update(1)
+        continue
     progress.set_description("Processing " + str(name))
-    run_n2v(settings.INDIVIDUAL_UW_GRAPH_DIR + '/' + f, 
+    try:
+        run_n2v(settings.INDIVIDUAL_UW_GRAPH_DIR + '/' + f, 
             settings.INDIVIDUAL_UW_N2V_DIR + '/' + name + '.emb',
             weighted = False, verbose = True,
             sample = 100)
-    progress.update(1)
-
-#run_n2v(settings.INDIVIDUAL_UW_GRAPH_DIR + '/' + name + '.txt', settings.INDIVIDUAL_UW_N2V_DIR + '/' + name + '.emb', weighted=False, verbose=True, sample=100)
+        progress.update(1)
+    except:
+        progress.update(1)
+        continue
