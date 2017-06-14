@@ -76,7 +76,7 @@ from ete2 import NCBITaxa
 ncbi = NCBITaxa('/dfs/scratch0/manans/.etetoolkit/taxa.sqlite')
 
 files = [f for f in listdir(settings.INDIVIDUAL_UW_N2V_DIR) if isfile(join(settings.INDIVIDUAL_UW_N2V_DIR, f))]
-#files = files[0:50]
+files = files[0:50]
 ids = []
 
 N_CLUSTERS = 150
@@ -90,6 +90,7 @@ with open(settings.SPECIES_MAPPING, 'r') as f:
 # Initialize MGKit
 from mgkit.taxon import *
 
+print "Reading UniprotTaxonomy from NCBI dump"
 mgk = UniprotTaxonomy()
 mgk.read_from_ncbi_dump('/dfs/scratch0/manans/ncbi/nodes.dmp', '/dfs/scratch0/manans/ncbi/names.dmp', '/dfs/scratch0/manans/ncbi/merged.dmp')
 
@@ -142,7 +143,7 @@ def plot_embedding(X, title=None):
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
 
-    plt.figure()
+    fig = plt.figure()
     color_idx = 0
     #ax = plt.subplot(111)
     for i in range(X.shape[0]):
@@ -158,24 +159,25 @@ def plot_embedding(X, title=None):
         elif domain == 'Eukaryota':
             clr = 'y'
         '''
+
         if text_str in colors_mapping:
             clr = colors_final[colors_mapping[text_str]]
+        
         elif color_idx < len(colors_final):
             colors_mapping[text_str] = color_idx
             clr = colors_final[colors_mapping[text_str]]
             color_idx += 1
             print "Using color", color_idx
         
-        plt.plot(X[i, 0], X[i, 1], color=clr, marker='o')
-
+        point = plt.plot(X[i, 0], X[i, 1], color=clr, marker='o')
         '''
         plt.text(X[i, 0], X[i, 1], text_str,
                  color=clr,
                  fontdict={'weight': 'bold', 'size': 9})
         '''
-    labels = ['Domain: ' + str(id_to_domain(str(files[i])[:-4])) + ' / Kingdom: ' + str(id_to_i(str(files[i])[:-4], 2)) for i in range(X.shape[0])]
-    tooltip = mpld3.plugins.PointLabelTooltip(plt.gcf(), labels=labels)
-    mpld3.plugins.connect(plt.gcf(), tooltip)
+        label = ['Domain: ' + str(id_to_domain(str(files[i])[:-4])) + ' / Subkingdom: ' + str(id_to_i(str(files[i])[:-4], 2)) + ' [' + str(files[i])[:-4] + ']']
+        tooltip = mpld3.plugins.PointLabelTooltip(point[0], labels=label)
+        mpld3.plugins.connect(fig, tooltip)
 
     '''
     if hasattr(offsetbox, 'AnnotationBbox'):
@@ -316,7 +318,7 @@ for i in tqdm(range(0, len(files))):
 
 print("Computing t-SNE embedding")
 print("Histogram is of length " + str(len(histograms)) + " with " + str(len(histograms[0])) + " dimensions / histogram")
-tsne = manifold.TSNE(n_components=2, init='pca', random_state=0, perplexity=40, n_iter=3000, verbose=2)
+tsne = manifold.TSNE(n_components=2, init='pca', random_state=0, perplexity=35, n_iter=3000, verbose=2)
 t0 = time()
 X_tsne = tsne.fit_transform(histograms)
 
