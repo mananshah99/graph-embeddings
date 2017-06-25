@@ -10,7 +10,7 @@ Code Listing
 | ``preprocessing/split_full.py``      | Transforms ``protein.links.full.v10.txt`` to 2,000 individual PPI networks   |
 | ``preprocessing/create_graph.py``    | Transforms 2,000 individual PPI networks into edgelist representations       |
 | ``embed-n2v/embed_node2vec.py``  | Embeds edgelist representations with node2vec uniform random sampling        |
-| ``embed-n2v/process_node2vec.py``| Processes all node2vec embeddings to obtain a standardized histogram / graph | 
+| ``embed-n2v/process_node2vec.py``| Processes all node2vec embeddings to obtain a standardized histogram | 
 | ``embed-gcn/prepare_gcn.py``     | Prepares input for a graph convolutional network framework                   |
 | ``cog-tests/cog.py``   | Run all COG experiments (inter/intra species + table visualizations)         |
 
