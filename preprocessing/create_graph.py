@@ -6,7 +6,7 @@ import networkx as nx
 import pygraphviz as pgv
 import re
 
-sys.path.insert(0, 'common')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
 import settings
 import util
 
