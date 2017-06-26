@@ -222,18 +222,97 @@ def cogs_per_species(locations):
 
     f.close()
 
-# 1 -- read the COG mapping file
-read_file(settings.COG_MAPPING)
+def min_complete_cogs(locations):
 
-# 2 -- read all PPI interaction networks (2031 species)
+    loc_ids = []      # ALL SPECIES IDs
+    loc_mappings = [] # PROTEINS
+    loc_cogs = []     # COGS
+
+    cog_species_map = {}
+
+    locations = locations[0:500]
+    progress = tqdm(total = len(locations))
+
+    for loc in locations:
+        progress.set_description('Reading ' + loc.split('/')[-1])
+        mapping = _create_local_mapping(loc, outer_loop = False)
+
+        cogs = set()
+        for pid in mapping:
+            try:
+                cid = proteinIDmap[pid]
+                cogs |= set (cid)
+            except:
+                pass
+ 
+        loc_mappings.append(mapping)
+        loc_ids.append(loc.split('/')[-1].strip('.txt'))
+        loc_cogs.append(cogs)
+
+        species_id = loc.split('/')[-1].strip('.txt')
+        for cog in cogs:
+            if cog not in cog_species_map:
+                cog_species_map[cog] = {species_id}
+            else:
+                cog_species_map[cog] |= {species_id}
+
+        progress.update(1)
+
+    progress.close()
+
+    # greedy descent to find the COGs that eliminate the most species
+    while len(loc_ids) > 0:
+        all_values = cog_species_map.values()
+        all_keys   = cog_species_map.keys()
+
+        indices = range(len(all_values))
+        sorted_vals = sorted(indices, key = lambda x: len(all_values[x]), reverse=True) 
+        # index [0] is the index of the longest thing in the actual array
+        
+        idx = sorted_vals[0] # [-1] for the last element, [0] for the first element, etc. 
+        key = list(all_keys)[idx]
+        val = list(all_values)[idx]
+        
+        
+        print "Removing COG", key
+        print "\t Will impact ", len(val)
+
+        # remove all of the species that contain this COG
+        for v in val:
+            try:
+                loc_ids.remove(str(v))
+            except:
+                pass
+       
+       # these species have been accounted for by the identified COG,
+       # so remove them from the other COG lists so we always pick the best next one
+        vset = set(val)
+        for k, v in cog_species_map.items():
+            cog_species_map[k] -= vset
+            # if empty
+            if cog_species_map[k] == set():
+                cog_species_map.pop(k, None)
+
+        # remove the chosen COG
+        cog_species_map.pop(key, None)
+
+
+# 1 -- read the COG mapping file and PPI interaction networks (2,031 species)
+read_file(settings.COG_MAPPING)
 files = [(settings.INDIVIDUAL_PPI_DIR + '/' +  f) for f in os.listdir(settings.INDIVIDUAL_PPI_DIR) if os.path.isfile(os.path.join(settings.INDIVIDUAL_PPI_DIR, f))]
 
 # 3 -- generate inter species matrix 
-#inter_species_matrix(files)
+# inter_species_matrix(files)
 
 # 4 -- generate intra species matrix (genefor any particular species)
-#intra_species_matrix(files[0]) #settings.INDIVIDUAL_PPI_DIR + '/10141.txt')
+# intra_species_matrix(files[0])
 
-# 5 -- generate table 
-cogs_per_species(files)
+# 5 -- generate table of cog files 
+# cogs_per_species(files)
 
+# 6 -- question 1: largest number of species that participate in one COG
+# print max([len(x) for x in cogIDmap.values()])  #=> 36429
+
+# 7 -- question 2: minimum number of COGs to cover all species
+
+min_complete_cogs(files)
