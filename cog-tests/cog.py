@@ -13,8 +13,7 @@ import numpy as np
 cogIDmap = {}
 proteinIDmap = {}
 
-def read_file(location, nlines=7881827):
-    
+def read_cog_mapping(location = settings.COG_MAPPING, nlines=7881827):
     f = open(location, 'r')
     progress = tqdm(total=nlines)
 
@@ -104,7 +103,7 @@ def intra_species_matrix(location):
         for j in range(i, len(mapping)):
             pid1 = mapping[i]
             pid2 = mapping[j]
-            nc, ke = n_cogs(pid1, pid2)
+            nc, ke = n_cogs(pid1, pid2) #ke = key error (number of occurrences)
             
             nke += ke
             ntot += 1
@@ -230,7 +229,6 @@ def min_complete_cogs(locations):
 
     cog_species_map = {}
 
-    locations = locations[0:500]
     progress = tqdm(total = len(locations))
 
     for loc in locations:
@@ -241,7 +239,7 @@ def min_complete_cogs(locations):
         for pid in mapping:
             try:
                 cid = proteinIDmap[pid]
-                cogs |= set (cid)
+                cogs |= set(cid)
             except:
                 pass
  
@@ -273,7 +271,6 @@ def min_complete_cogs(locations):
         key = list(all_keys)[idx]
         val = list(all_values)[idx]
         
-        
         print "Removing COG", key
         print "\t Will impact ", len(val)
 
@@ -284,8 +281,8 @@ def min_complete_cogs(locations):
             except:
                 pass
        
-       # these species have been accounted for by the identified COG,
-       # so remove them from the other COG lists so we always pick the best next one
+        # these species have been accounted for by the identified COG
+        # so remove them from the other COG lists so we always pick the best next one
         vset = set(val)
         for k, v in cog_species_map.items():
             cog_species_map[k] -= vset
@@ -296,23 +293,93 @@ def min_complete_cogs(locations):
         # remove the chosen COG
         cog_species_map.pop(key, None)
 
+# can't return a matrix -- would be too sparse
+# will return dictionary instead
+def read_cog_links(location = settings.COG_LINKS):
+    f = open(location, 'r')
+    association_mapping = {}
+    
+    progress = tqdm(total = util.count_lines(location))
+    
+    first = True
+    for line in f:
+        if first:
+            first = False
+            progress.update(1)
+            continue
+        else:
+            line = line.strip('\n').split(' ')
+            cog_1 = line[0]
+            cog_2 = line[1]
+            ascore = int(line[2])
+            
+            if line[0] in association_mapping:
+                association_mapping[cog_1].append([cog_2, ascore])
+            else:
+                association_mapping[cog_1] = [[cog_2, ascore]]
+            
+            if line[1] in association_mapping:
+                association_mapping[cog_2].append([cog_1, ascore])
+            else:
+                association_mapping[cog_2] = [[cog_1, ascore]]
+                
+            progress.set_description('Reading COG ' + cog_1)
+            progress.update(1)
+    
+    progress.close()
+    
+    return association_mapping
 
+# outputs proteins that are covered by the cogs and their associations
+# only these protein IDs will be considered when scanning graphs with node2vec
+# instead of a random sampling of nodes, these nodes will be selected in a rule-based approach
+def process_cog_links(locations,             # locations of PPI networks
+                      association_mapping,   # mapping of COG ID -> [associated COGs, association scores]
+                      cog_ids,               # list of COG IDs to consider
+                      thresholds,            # thresholds for selecting related COGs
+                      depth = 0              # recursively extend COG list (all thresholds for depth > 0 are 900)
+                     ):           
+ 
+    all_associations = cog_ids # all COGs to consider
+    for i in xrange(depth + 1):
+        te = []
+        for j, cid in enumerate(all_associations):
+            old = len(te)
+            te.extend([k[0] for k in association_mapping[str(cid)] if k[1] >= (thresholds[j] if i == 0 else 999)])
+            new = len(te)
+            #print "\t" + str(cid) + " => " + str(new - old)
+            
+        all_associations.extend(te)
+    
+    all_associations = list(set(all_associations))
+
+    
+    all_proteins = set()
+    for cog in all_associations:
+        all_proteins |= set(cogIDmap[cog])
+    
+    import pickle
+    with open('/dfs/scratch0/manans/ribosomal_proteins_t=' + str(thresholds[0]) + '.pkl', 'wb') as f: 
+        pickle.dump(all_proteins, f)
+        
+    return all_proteins 
+    
 # 1 -- read the COG mapping file and PPI interaction networks (2,031 species)
-read_file(settings.COG_MAPPING)
+read_cog_mapping(settings.COG_MAPPING)
+
 files = [(settings.INDIVIDUAL_PPI_DIR + '/' +  f) for f in os.listdir(settings.INDIVIDUAL_PPI_DIR) if os.path.isfile(os.path.join(settings.INDIVIDUAL_PPI_DIR, f))]
 
-# 3 -- generate inter species matrix 
+# 2 -- generate inter species matrix (species to species COG correlations)
 # inter_species_matrix(files)
 
-# 4 -- generate intra species matrix (genefor any particular species)
+# 3 -- generate intra species matrix (gene for any particular species)
 # intra_species_matrix(files[0])
 
-# 5 -- generate table of cog files 
+# 4 -- generate table of cog files 
 # cogs_per_species(files)
 
-# 6 -- question 1: largest number of species that participate in one COG
-# print max([len(x) for x in cogIDmap.values()])  #=> 36429
+# 5 -- questions 1-3: minimum number of COGs to cover all species and most extensive COG
+# min_complete_cogs(files)
 
-# 7 -- question 2: minimum number of COGs to cover all species
-
-min_complete_cogs(files)
+# 6 -- question 4: can we use the ribosomal protein COG and its related COGs as baselines for species similarity 
+process_cog_links(files, read_cog_links(settings.COG_LINKS), ['COG0197'], [850], depth=1)
