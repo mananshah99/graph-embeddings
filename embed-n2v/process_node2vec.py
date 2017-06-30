@@ -75,11 +75,11 @@ from ete2 import NCBITaxa
 #set up NCBI database
 ncbi = NCBITaxa('/dfs/scratch0/manans/.etetoolkit/taxa.sqlite')
 
-files = [f for f in listdir(settings.INDIVIDUAL_UW_N2V_DIR) if isfile(join(settings.INDIVIDUAL_UW_N2V_DIR, f))]
-files = files[0:50]
+files = [f for f in listdir(settings.INDIVIDUAL_UW_N2V_NODES_DIR) if isfile(join(settings.INDIVIDUAL_UW_N2V_NODES_DIR, f))]
+files = files[0:500]
 ids = []
 
-N_CLUSTERS = 150
+N_CLUSTERS = 75 #150
 GRAPH = 0
 
 # Fill the ids array
@@ -148,7 +148,7 @@ def plot_embedding(X, title=None):
     #ax = plt.subplot(111)
     for i in range(X.shape[0]):
         domain = id_to_domain(str(files[i])[:-4])
-        text_str = id_to_i(str(files[i])[:-4], 2)  #id_to_x(str(files[i])[:-4], 'class')
+        text_str = domain #id_to_i(str(files[i])[:-4], 2)  #id_to_x(str(files[i])[:-4], 'class')
         
         clr = 'k'
         '''
@@ -206,7 +206,7 @@ def get_vectors(f):
 
     v = []
 
-    for j in range(0, min(200,n)):#n):
+    for j in range(0, n):#min(100,n)):#min(200,n)):#n):
         line = i.readline().rstrip().split(' ')
         line = [float(x) for x in line]
         v.append(line[1:])
