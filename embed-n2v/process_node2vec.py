@@ -76,10 +76,10 @@ from ete2 import NCBITaxa
 ncbi = NCBITaxa('/dfs/scratch0/manans/.etetoolkit/taxa.sqlite')
 
 files = [f for f in listdir(settings.INDIVIDUAL_UW_N2V_NODES_DIR) if isfile(join(settings.INDIVIDUAL_UW_N2V_NODES_DIR, f))]
-files = files[0:500]
+files = files[0:1000]
 ids = []
 
-N_CLUSTERS = 75 #150
+N_CLUSTERS = 100 #150
 GRAPH = 0
 
 # Fill the ids array
@@ -151,15 +151,15 @@ def plot_embedding(X, title=None):
         text_str = domain #id_to_i(str(files[i])[:-4], 2)  #id_to_x(str(files[i])[:-4], 'class')
         
         clr = 'k'
-        '''
+        
         if domain == 'Bacteria':
             clr = 'b'
         elif domain == 'Archaea':
             clr = 'r'
         elif domain == 'Eukaryota':
             clr = 'y'
+        
         '''
-
         if text_str in colors_mapping:
             clr = colors_final[colors_mapping[text_str]]
         
@@ -168,7 +168,7 @@ def plot_embedding(X, title=None):
             clr = colors_final[colors_mapping[text_str]]
             color_idx += 1
             print "Using color", color_idx
-        
+        '''
         point = plt.plot(X[i, 0], X[i, 1], color=clr, marker='o')
         '''
         plt.text(X[i, 0], X[i, 1], text_str,
@@ -179,21 +179,6 @@ def plot_embedding(X, title=None):
         tooltip = mpld3.plugins.PointLabelTooltip(point[0], labels=label)
         mpld3.plugins.connect(fig, tooltip)
 
-    '''
-    if hasattr(offsetbox, 'AnnotationBbox'):
-        # only print thumbnails with matplotlib > 1.0
-        shown_images = np.array([[1., 1.]])  # just something big
-        for i in range(digits.data.shape[0]):
-            dist = np.sum((X[i] - shown_images) ** 2, 1)
-            if np.min(dist) < 4e-3:
-                # don't show points that are too close
-                continue
-            shown_images = np.r_[shown_images, [X[i]]]
-            imagebox = offsetbox.AnnotationBbox(
-                offsetbox.OffsetImage(digits.images[i], cmap=plt.cm.gray_r),
-                X[i])
-            ax.add_artist(imagebox)
-    '''
     plt.xticks([]), plt.yticks([])
     if title is not None:
         plt.title(title)
@@ -206,7 +191,7 @@ def get_vectors(f):
 
     v = []
 
-    for j in range(0, n):#min(100,n)):#min(200,n)):#n):
+    for j in range(0, min(250, n)):
         line = i.readline().rstrip().split(' ')
         line = [float(x) for x in line]
         v.append(line[1:])
@@ -215,7 +200,7 @@ def get_vectors(f):
     return v 
 
 def get_histogram(f, clf):
-    vv = get_vectors(settings.INDIVIDUAL_UW_N2V_DIR + '/' + f)
+    vv = get_vectors(settings.INDIVIDUAL_UW_N2V_NODES_DIR + '/' + f)
     h = [0 for i in xrange(N_CLUSTERS)]
 
     for v in vv:
@@ -307,7 +292,7 @@ if GRAPH:
 
     plt.savefig('silhouette.png')
 
-print len(X), len(X[0]), "Running KMeans"
+print len(X), "x", len(X[0]), "Running KMeans"
 
 km.fit(X)
 
