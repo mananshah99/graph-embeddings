@@ -61,7 +61,7 @@ from ete2 import NCBITaxa
 ncbi = NCBITaxa('/dfs/scratch0/manans/.etetoolkit/taxa.sqlite')
 
 # read .nemb file
-EMBEDDING_FILE = 'n2v-kmeans.nemb'
+EMBEDDING_FILE = 'emb/n2v-kmeans.nemb'
 histograms = []
 species_ids = []
 
