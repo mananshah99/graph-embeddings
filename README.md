@@ -7,10 +7,12 @@ Code Listing
 | ``common/util.py``     | General utility functions to simplify file i/o                               |
 | ``common/log.py``      | Functions to aid in logging program output                                   |
 | ``common/settings.py`` | Static variables for file and directory locations                            |
-| ``preprocessing/split_full.py``      | Transforms ``protein.links.full.v10.txt`` to 2,000 individual PPI networks   |
-| ``preprocessing/create_graph.py``    | Transforms 2,000 individual PPI networks into edgelist representations       |
+| ``process/split_full.py``      | Transforms ``protein.links.full.v10.txt`` to 2,000 individual PPI networks   |
+| ``process/create_graph.py``    | Transforms 2,000 individual PPI networks into edgelist representations       |
 | ``embed-n2v/embed_node2vec.py``  | Embeds edgelist representations with node2vec uniform random sampling        |
 | ``embed-n2v/process_node2vec.py``| Processes all node2vec embeddings to obtain a standardized histogram | 
+| ``embed-n2v/visualize_tsne.py``  | Visualizes the processed embeddings in a low-dimensional space with tSNE |
+| ``embed-n2v/evaluate_embeddings.py`` | Evaluates embedding effectiveness in comparison to the tree of life |
 | ``embed-gcn/prepare_gcn.py``     | Prepares input for a graph convolutional network framework                   |
 | ``cog-tests/cog.py``   | Run all COG experiments (inter/intra species + table visualizations)         |
 
