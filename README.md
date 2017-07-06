@@ -12,7 +12,7 @@ Code Listing
 | ``embed-n2v/embed_node2vec.py``  | Embeds edgelist representations with node2vec uniform random sampling        |
 | ``embed-n2v/process_node2vec.py``| Processes all node2vec embeddings to obtain a standardized histogram | 
 | ``embed-n2v/visualize_tsne.py``  | Visualizes the processed embeddings in a low-dimensional space with tSNE |
-| ``embed-n2v/evaluate_embeddings.py`` | Evaluates embedding effectiveness in comparison to the tree of life |
+| ``embed-n2v/evaluate_tree.py`` | Evaluates embedding effectiveness in comparison to the tree of life |
 | ``embed-gcn/prepare_gcn.py``     | Prepares input for a graph convolutional network framework                   |
 | ``cog-tests/cog.py``   | Run all COG experiments (inter/intra species + table visualizations)         |
 
