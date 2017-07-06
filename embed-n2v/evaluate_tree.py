@@ -16,7 +16,7 @@ from os.path import isfile, join
 from scipy.spatial.distance import cdist, pdist
 from sklearn.cluster import KMeans
 
-EMBEDDING_FILE = 'n2v-kmeans.nemb' 
+EMBEDDING_FILE = 'emb/n2v-kmeans.nemb' 
 vector_map = {}
 
 with open(EMBEDDING_FILE, 'r') as f:
@@ -31,4 +31,7 @@ with open(EMBEDDING_FILE, 'r') as f:
 
 evaluator = TreeEvaluator(vectors=vector_map)
 
-evaluator.evaluate()
+for i in [0, 5, 10, 15, 20]:
+    print "MIN_DIST = " + str(i)
+    corr, y, n = evaluator.evaluate(n_perm = 50, min_dist = i)
+    print "\t", corr, y, n
