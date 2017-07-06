@@ -50,7 +50,7 @@ class TreeEvaluator():
         nodes = self.sample(all_nodes, k)
         distances = self.distances(nodes)
 
-        while([(i < min_dist and i > max_dist) for i in distances] != [False]*k):
+        while(False in [(i > min_dist and i < max_dist) for i in distances]):
             nodes = self.sample(all_nodes, k)
             distances = self.distances(nodes)
 
@@ -66,9 +66,12 @@ class TreeEvaluator():
         n_incorrect = 0     # tree distance and vector distance of opposite signs
         avg_corr = 0.       # average correlation coefficient
 
-        for p in tqdm(xrange(n_perm)):
+        progress = tqdm(total=n_perm)
+
+        for p in xrange(n_perm):
             nodes, distances = self.get_nodes(min_dist, max_dist, k=3)
             distances_tst = []
+            progress.set_description(str(distances))
             for i in range(0, len(nodes)):
                 for j in range(i, len(nodes)):
                     if j != i:
@@ -85,9 +88,10 @@ class TreeEvaluator():
             cc = np.corrcoef(distances, distances_tst)[0][1]
             if np.isnan(cc):
                 cc = 0.
+            
+            progress.update(1)
 
             avg_corr += np.abs(cc)
         avg_corr /= n_perm
-        
-        return avg_corr, n_correct, n_incorrect
-                
+        progress.close()
+        return avg_corr, n_correct, n_incorrect 
