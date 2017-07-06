@@ -382,4 +382,4 @@ files = [(settings.INDIVIDUAL_PPI_DIR + '/' +  f) for f in os.listdir(settings.I
 # min_complete_cogs(files)
 
 # 6 -- question 4: can we use the ribosomal protein COG and its related COGs as baselines for species similarity 
-process_cog_links(files, read_cog_links(settings.COG_LINKS), ['COG0197'], [850], depth=1)
+process_cog_links(files, read_cog_links(settings.COG_LINKS), ['COG0197'], [850], depth=0)
