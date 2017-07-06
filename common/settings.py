@@ -8,6 +8,7 @@ PROTEIN_LINKS = '/dfs/ilfs2/0/MINER-BIO/data-miner/raw-data/STRING/STRING_v10/pr
 SPECIES_MAPPING = '/dfs/ilfs2/0/MINER-BIO/data-miner/raw-data/STRING/STRING_v10/species.v10.txt'
 COG_MAPPING = '/dfs/ilfs2/0/MINER-BIO/data-miner/raw-data/STRING/STRING_v10/COG.mappings.v10.txt'
 COG_LINKS = '/dfs/ilfs2/0/MINER-BIO/data-miner/raw-data/STRING/STRING_v10/COG.links.v10.txt'
+SPECIES_TREE = '/dfs/ilfs2/0/MINER-BIO/data-miner/raw-data/STRING/STRING_v10/species.tree.v10.txt'
 
 INDIVIDUAL_PPI_DIR = '/dfs/scratch0/manans/ppi'
 INDIVIDUAL_UW_GRAPH_DIR = '/dfs/scratch0/manans/ppi-uw-graph'
