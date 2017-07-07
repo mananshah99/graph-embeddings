@@ -2,8 +2,8 @@
 
 Code Listing
 
-| Name                                | Description                                                                  |
-|-------------------------------------|------------------------------------------------------------------------------|
+| Name                                | Description                                                              |
+|-------------------------------------|--------------------------------------------------------------------------|
 | ``common/util.py``     | General utility functions to simplify file i/o                               |
 | ``common/log.py``      | Functions to aid in logging program output                                   |
 | ``common/settings.py`` | Static variables for file and directory locations                            |
