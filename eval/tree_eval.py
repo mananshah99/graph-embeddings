@@ -16,16 +16,24 @@ import random
 from operator import itemgetter
 
 import warnings
+from random import shuffle
 
 class TreeEvaluator():
-    def __init__(self, vectors, path=settings.SPECIES_TREE):
+    def __init__(self, vectors, path=settings.SPECIES_TREE, baseline=False):
         self.path = path
-        self.vector_map = vectors
         self.tree = Tree(path)
         self.seed = 0
         
         random.seed(self.seed)
+       
+        if baseline:
+            # if baseline is True, randomly shuffle the vectors
+            values = vectors.values()
+            shuffle(values)
+            vectors = dict(zip(vectors.keys(), values)) 
 
+        self.vector_map = vectors
+ 
         # update the tree with the vectors -- only need to do this once
         for leaf in self.tree.get_leaves():
             try:
@@ -94,4 +102,5 @@ class TreeEvaluator():
             avg_corr += np.abs(cc)
         avg_corr /= n_perm
         progress.close()
+
         return avg_corr, n_correct, n_incorrect 
