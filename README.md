@@ -13,7 +13,7 @@ Code Listing
 | ``embed-n2v/process_node2vec.py``| Processes all node2vec embeddings to obtain a standardized histogram | 
 | ``embed-n2v/visualize_tsne.py``  | Visualizes the processed embeddings in a low-dimensional space with tSNE |
 | ``embed-n2v/evaluate_tree.py`` | Evaluates embedding effectiveness in comparison to the tree of life |
-| ``embed-gcn/induce_subgraph.py`` | Generates subgraphs and labels from individual PPI networks |
+| ``embed-gcn/gen_subgraph.py`` | Generates subgraphs and labels from individual PPI networks |
 | ``eval/tree_eval.py`` | Framework to evaluate vectorized embeddings with permuted tree of life examples |
 | ``exp-cog/cog.py``   | Run all COG experiments (inter/intra species + table visualizations)         |
 
