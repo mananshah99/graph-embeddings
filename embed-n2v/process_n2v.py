@@ -32,8 +32,9 @@ ids = []
 
 N_CLUSTERS = 100
 MAX_COMPONENTS = 250
+HISTOGRAM = False
 
-out_file = 'n2v-kmeans.nemb'
+out_file = 'n2v-kmeans-avg.nemb'
 
 def get_vectors(f):
     i = open(f, 'r')
@@ -62,47 +63,88 @@ def get_histogram(f, clf):
     
     return h
 
+def get_average(f):
+    vv = get_vectors(settings.INDIVIDUAL_UW_N2V_NODES_DIR + '/' + f)
+    avg = [0] * len(vv[0])
+    for v in vv:
+        for i in range(0, len(v)):
+            avg[i] += v[i]
+
+    for i in range(0, len(avg)):
+        avg[i] /= (len(vv) * 1.)
+
+    return avg
+
 km = KMeans(n_clusters = N_CLUSTERS, random_state = 0, n_jobs = -1, verbose=1)
 X = []
 
-# begin processing files
+if HISTOGRAM:
 
-progress = tqdm(total = len(files))
-for f in files:
-    progress.set_description('File %s' % f)
-    f = settings.INDIVIDUAL_UW_N2V_DIR + '/' + f 
-    v = get_vectors(f)
-    for t in v:
-        X.append(t)
+    # begin processing files
 
-    progress.update(1)
+    progress = tqdm(total = len(files))
+    for f in files:
+        progress.set_description('File %s' % f)
+        f = settings.INDIVIDUAL_UW_N2V_DIR + '/' + f 
+        v = get_vectors(f)
+        for t in v:
+            X.append(t)
 
-progress.close()
+        progress.update(1)
 
-# run kmeans
+    progress.close()
 
-print "[", len(X), "x", len(X[0]), "]", "Running KMeans"
-km.fit(X)
-histograms = {}
+    # run kmeans
 
-# extract histograms
+    print "[", len(X), "x", len(X[0]), "]", "Running KMeans"
+    km.fit(X)
+    histograms = {}
 
-progress = tqdm(total = len(files))
-for i in range(0, len(files)):
-    progress.set_description('File %s' % files[i])
-    h = get_histogram(files[i], km)
-    histograms[files[i]] = h
+    # extract histograms
 
-    progress.update(1)
+    progress = tqdm(total = len(files))
+    for i in range(0, len(files)):
+        progress.set_description('File %s' % files[i])
+        h = get_histogram(files[i], km)
+        histograms[files[i]] = h
 
-# save to normalized embedding file (.nemb)
+        progress.update(1)
 
-f = open(out_file, 'wb+')
-for k, v in histograms.items():
-    line = str(k)[:-4]
-    for val in v:
-        line += (" " + str(val))
+    progress.close()
 
-    f.write(line + "\n")
+    # save to normalized embedding file (.nemb)
 
-f.close()
+    f = open(out_file, 'wb+')
+    for k, v in histograms.items():
+        line = str(k)[:-4]
+        for val in v:
+            line += (" " + str(val))
+
+        f.write(line + "\n")
+
+    f.close()
+
+else:
+    result = {}
+
+    progress = tqdm(total = len(files))
+    for i in range(0, len(files)):
+        progress.set_description('File %s' % files[i])
+        avg = get_average(files[i])
+        result[files[i]] = avg
+
+        progress.update(1)
+    
+    progress.close()
+
+    # save to normalized embedding file (.nemb)
+
+    f = open(out_file, 'wb+')
+    for k, v in result.items():
+        line = str(k)[:-4]
+        for val in v:
+            line += (" " + str(val))
+
+        f.write(line + "\n")
+
+    f.close()
