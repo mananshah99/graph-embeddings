@@ -39,7 +39,7 @@ class TreeEvaluator():
             try:
                 leaf.add_features(vector=vectors[leaf.name])
             except Exception as e:
-                leaf.add_features(vector=[1]*100)
+                leaf.add_features(vector=[1]*len(vectors.values()[0]))
         
     def sample(self, l, k):
         return [l[i] for i in sorted(random.sample(xrange(len(l)), k))]
