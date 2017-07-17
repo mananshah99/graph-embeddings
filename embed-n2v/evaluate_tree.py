@@ -35,12 +35,12 @@ evaluator = TreeEvaluator(vectors=vector_map, baseline=False)
 
 for i in [10]: #[0, 5, 10, 15, 20]:
     print "[new] MIN_DIST = " + str(i)
-    corr, y, n = evaluator.evaluate(n_perm = 5000, min_dist = i, metric=distance.sqeuclidean)
+    corr, y, n = evaluator.evaluate(n_perm = 500, min_dist = i, metric=distance.sqeuclidean)
     print "\t", corr, y, n
 
 evaluator = TreeEvaluator(vectors=vector_map, baseline=True)
 
 for i in [10]: #[0, 5, 10, 15, 20]:
     print "[baseline] MIN_DIST = " + str(i)
-    corr, y, n = evaluator.evaluate(n_perm = 5000, min_dist = i, metric=distance.sqeuclidean)
+    corr, y, n = evaluator.evaluate(n_perm = 500, min_dist = i, metric=distance.sqeuclidean)
     print "\t", corr, y, n

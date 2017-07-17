@@ -31,6 +31,8 @@ from sklearn import (manifold, datasets, decomposition, ensemble,
 import six
 from matplotlib import colors
 
+from sklearn.decomposition import PCA
+
 # Set up colors for plotting
 colors_ = list(six.iteritems(colors.cnames))
 for name, rgb in six.iteritems(colors.ColorConverter.colors):
@@ -61,7 +63,7 @@ from ete2 import NCBITaxa
 ncbi = NCBITaxa('/dfs/scratch0/manans/.etetoolkit/taxa.sqlite')
 
 # read .nemb file
-EMBEDDING_FILE = 'emb/n2v-kmeans.nemb'
+EMBEDDING_FILE = 'emb/n2v-avg.nemb'
 histograms = []
 species_ids = []
 
@@ -155,7 +157,8 @@ def plot_embedding(X, title=None):
 print("Computing t-SNE embedding")
 print("Histogram is of length " + str(len(histograms)) + " with " + str(len(histograms[0])) + " dimensions / histogram")
 
-tsne = manifold.TSNE(n_components=2, init='pca', random_state=0, perplexity=35, n_iter=3000, verbose=2)
+tsne = decomposition.PCA(n_components=2)
+#tsne = manifold.TSNE(n_components=2, init='pca', random_state=0, perplexity=200, n_iter=3000, verbose=2)
 t0 = time()
 X_tsne = tsne.fit_transform(histograms)
 plot_embedding(X_tsne,

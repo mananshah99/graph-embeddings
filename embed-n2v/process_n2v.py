@@ -27,14 +27,16 @@ from os.path import isfile, join
 from scipy.spatial.distance import cdist, pdist
 from sklearn.cluster import KMeans
 
-files = [f for f in listdir(settings.INDIVIDUAL_UW_N2V_NODES_DIR) if isfile(join(settings.INDIVIDUAL_UW_N2V_NODES_DIR, f))]
+directory = settings.INDIVIDUAL_UW_N2V_DIR #settings.INDIVIDUAL_UW_N2V_NODES_DIR
+
+files = [f for f in listdir(directory) if isfile(join(directory, f))]
 ids = []
 
 N_CLUSTERS = 100
 MAX_COMPONENTS = 250
 HISTOGRAM = False
 
-out_file = 'n2v-kmeans-avg.nemb'
+out_file = 'n2v-random-avg.nemb'
 
 def get_vectors(f):
     i = open(f, 'r')
@@ -53,7 +55,7 @@ def get_vectors(f):
     return v 
 
 def get_histogram(f, clf):
-    vv = get_vectors(settings.INDIVIDUAL_UW_N2V_NODES_DIR + '/' + f)
+    vv = get_vectors(directory + '/' + f)
     h = [0 for i in xrange(N_CLUSTERS)]
 
     for v in vv:
@@ -64,7 +66,7 @@ def get_histogram(f, clf):
     return h
 
 def get_average(f):
-    vv = get_vectors(settings.INDIVIDUAL_UW_N2V_NODES_DIR + '/' + f)
+    vv = get_vectors(directory + '/' + f)
     avg = [0] * len(vv[0])
     for v in vv:
         for i in range(0, len(v)):
