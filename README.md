@@ -14,6 +14,9 @@ Code Listing
 | ``embed-n2v/visualize_tsne.py``      | Visualizes the processed embeddings in a low-dimensional space with tSNE |
 | ``embed-n2v/evaluate_tree.py``       | Evaluates embedding effectiveness in comparison to the tree of life      |  
 | ``embed-gcn/gen_subgraph.py``        | Generates subgraphs and labels from individual PPI networks              |
+| ``embed-gcn/layers/graph.py``        | Defines the graph convolution layer in Keras form (from Kipf et al)      |
+| ``embed-gcn/utils.py``               | Defines utilities for GCN data extraction and preprocessing              |
+| ``embed-gcn/train_batch.py``         | Trains a GCN on a series of PPI networks                                 |
 | ``eval/tree_eval.py``                | Framework to evaluate vectorized embeddings with permuted node  examples |
 | ``exp-cog/cog.py``                   | Run all COG experiments (inter/intra species + table visualizations)     |
 
