@@ -21,6 +21,7 @@ from utils import *
 
 import numpy as np
 import time
+from time import gmtime, strftime
 
 FILTER = 'localpool'    # 'chebyshev'
 MAX_DEGREE = 2          # maximum polynomial degree
@@ -73,11 +74,11 @@ epoch_lens = [NB_EPOCH] * len(edgelists)
 for b in xrange(200):
     print("[-- EPOCH " + str(b) + " --]")
     
-    # Push accuracies to phone
+    # Push losses to phone
     '''
-    if (b + 1) % 5 == 0:
+    if (b + 1) % 10 == 0:
         s = ""
-        for a in accuracies:
+        for a in losses:
             s += str(a) + " "
     
         util.push_notify(s)
@@ -85,7 +86,7 @@ for b in xrange(200):
     # Train more on the worst example (greater loss = train more)
     if len(losses) > 0:
         for i in range(0, len(losses)):
-            epoch_lens[i] = int( losses[i] / sum(losses) * NB_EPOCH )
+            epoch_lens[i] = int( losses[i] / sum(losses) * NB_EPOCH ) * 2
     
     losses = []
     print("Lengths: ", epoch_lens)
@@ -152,6 +153,7 @@ for b in xrange(200):
 
     """ INNER LOOP 2: TESTING """
 
+    accuracies = []
     for example in xrange(len(edgelists)):
       
         X, A, y, n = load_edgelist(path = edgelists[example][0],
@@ -187,4 +189,18 @@ for b in xrange(200):
         print("\tTest set results:",
             "loss= {:.4f}".format(test_loss[0]),
             "accuracy= {:.4f}".format(test_acc[0]))
+        accuracies.append(test_acc[0])
 
+    """ CHECK FOR COMPLETION """
+
+    # all accuracies on the test set are > 0.9
+    if ([i > 0.9 for i in accuracies] == [True]*len(accuracies)):
+        time_s = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
+        model.save('bin/' + time_s + '-model.h5')
+        
+        model_json = model.to_json()
+        with open('bin/' + time_s + '-arch.json', 'w') as json_file:
+            json_file.write(model_json)
+
+        util.push_notify(time_s + ' => DONE') 
+        sys.exit(0)
