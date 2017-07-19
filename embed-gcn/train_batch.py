@@ -19,16 +19,17 @@ import util
 from graph import GraphConvolution
 from utils import *
 
+import numpy as np
 import time
 
 FILTER = 'localpool'    # 'chebyshev'
 MAX_DEGREE = 2          # maximum polynomial degree
 SYM_NORM = True         # symmetric (True) vs. left-only (False) normalization
-NB_EPOCH = 200          # number of epochs
+NB_EPOCH = 40           # number of epochs
 PATIENCE = 90           # early stopping patience
 
-FEAT_DIM = 128          # number of randomly initialized features / node
-LABELS_DIM = 2031       # number of examples
+FEAT_DIM = 256          # number of randomly initialized features / node
+LABELS_DIM = 3          #2031       # number of examples
 
 X_in = Input(shape=(FEAT_DIM,))
 
@@ -44,6 +45,8 @@ else:
     raise Exception('Invalid filter type.')
 
 H = Dropout(0.5)(X_in)
+H = GraphConvolution(32, support, activation='relu', W_regularizer=l2(5e-4))([H]+G)
+H = Dropout(0.5)(H)
 H = GraphConvolution(16, support, activation='relu', W_regularizer=l2(5e-4))([H]+G)
 H = Dropout(0.5)(H)
 Y = GraphConvolution(LABELS_DIM, support, activation='softmax')([H]+G)
@@ -63,7 +66,7 @@ for n, f in enumerate(os.listdir(settings.INDIVIDUAL_UW_GRAPH_DIR)):
     edgelists.append((path, n + 1))
 
 edgelists = edgelists[0:2]
-accuracies = []
+losses = []
 epoch_lens = [NB_EPOCH] * len(edgelists)
 
 # OUTER LOOP: Number of Overall Epochs
@@ -71,19 +74,20 @@ for b in xrange(200):
     print("[-- EPOCH " + str(b) + " --]")
     
     # Push accuracies to phone
+    '''
     if (b + 1) % 5 == 0:
         s = ""
         for a in accuracies:
             s += str(a) + " "
     
         util.push_notify(s)
-
-    # Train more on the worst example
-    if len(accuracies) > 0:
-        for i in range(0, len(accuracies)):
-            epoch_lens[i] = 50 + int( (1 - accuracies[i]) * NB_EPOCH )
+    '''
+    # Train more on the worst example (greater loss = train more)
+    if len(losses) > 0:
+        for i in range(0, len(losses)):
+            epoch_lens[i] = int( losses[i] / sum(losses) * NB_EPOCH )
     
-    accuracies = []
+    losses = []
     print("Lengths: ", epoch_lens)
     
     """ INNER LOOP 1: TRAINING """
@@ -95,10 +99,7 @@ for b in xrange(200):
                                    labels_dim = LABELS_DIM,
                                    feat_dim = FEAT_DIM)
 
-        # Get splits
         y_train, y_val, y_test, idx_train, idx_val, idx_test, train_mask = get_splits(y, n)
-
-        # Normalize X
         X = np.diag(1./np.array(X.sum(1)).flatten()).dot(X)
 
         if FILTER == 'localpool':
@@ -119,9 +120,10 @@ for b in xrange(200):
             raise Exception('Invalid filter type.')
 
         print("## EXAMPLE " + str(edgelists[example][0]) + " => " + str(edgelists[example][1]))
-        # Fit
+        
         wait = 0
-        for epoch in range(1, epoch_lens[example] + 1):
+        tloss = None
+        for epoch in range(epoch_lens[example] + 1):
 
             t = time.time()
 
@@ -141,6 +143,12 @@ for b in xrange(200):
                   "val_loss= {:.4f}".format(train_val_loss[1]),
                   "val_acc= {:.4f}".format(train_val_acc[1]),
                   "time= {:.4f}".format(time.time() - t))
+
+            tloss = train_val_loss[1]
+            if np.isinf(tloss):
+                tloss = 1000 # a large number
+        
+        losses.append(tloss)
 
     """ INNER LOOP 2: TESTING """
 
@@ -180,4 +188,3 @@ for b in xrange(200):
             "loss= {:.4f}".format(test_loss[0]),
             "accuracy= {:.4f}".format(test_acc[0]))
 
-        accuracies.append(test_acc[0])
