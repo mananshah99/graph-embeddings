@@ -19,6 +19,7 @@ import util
 from graph import GraphConvolution
 from utils import *
 
+import cPickle
 import numpy as np
 import time
 from time import gmtime, strftime
@@ -26,11 +27,11 @@ from time import gmtime, strftime
 FILTER = 'localpool'    # 'chebyshev'
 MAX_DEGREE = 2          # maximum polynomial degree
 SYM_NORM = True         # symmetric (True) vs. left-only (False) normalization
-NB_EPOCH = 40           # number of epochs
+NB_EPOCH = 30           # number of epochs
 PATIENCE = 90           # early stopping patience
 
-FEAT_DIM = 256          # number of randomly initialized features / node
-LABELS_DIM = 3          #2031       # number of examples
+FEAT_DIM = 1024         # number of randomly initialized features / node
+LABELS_DIM = 4          # 2031       # number of examples
 
 X_in = Input(shape=(FEAT_DIM,))
 
@@ -64,14 +65,23 @@ best_val_loss = 99999
 edgelists = []
 for n, f in enumerate(os.listdir(settings.INDIVIDUAL_UW_GRAPH_DIR)):
     path = settings.INDIVIDUAL_UW_GRAPH_DIR + '/' + f
-    edgelists.append((path, n + 1))
+    edgelists.append((path, n))
 
-edgelists = edgelists[0:2]
+edgelists = [(i[0], e) for e, i in enumerate(edgelists[0:4])]
+
+print(edgelists)
+
 losses = []
 epoch_lens = [NB_EPOCH] * len(edgelists)
 
+# plot lists
+plot_train_losses = []      # DONE
+plot_test_losses = []
+plot_epoch_lengths = []     # DONE
+plot_epochs = []            # DONE
+
 # OUTER LOOP: Number of Overall Epochs
-for b in xrange(200):
+for b in xrange(400):
     print("[-- EPOCH " + str(b) + " --]")
     
     # Push losses to phone
@@ -86,13 +96,17 @@ for b in xrange(200):
     # Train more on the worst example (greater loss = train more)
     if len(losses) > 0:
         for i in range(0, len(losses)):
-            epoch_lens[i] = int( losses[i] / sum(losses) * NB_EPOCH ) * 2
+            epoch_lens[i] = int( losses[i] / sum(losses) * NB_EPOCH ) * len(losses)
     
     losses = []
     print("Lengths: ", epoch_lens)
     
+    plot_epochs.append(b)
+    plot_epoch_lengths.append(epoch_lens)
+
     """ INNER LOOP 1: TRAINING """
 
+    _losses = []
     for example in xrange(len(edgelists)):
 
         X, A, y, n = load_edgelist(path = edgelists[example][0],
@@ -124,6 +138,8 @@ for b in xrange(200):
         
         wait = 0
         tloss = None
+        _losses_t = []
+
         for epoch in range(epoch_lens[example] + 1):
 
             t = time.time()
@@ -149,13 +165,18 @@ for b in xrange(200):
             if np.isinf(tloss):
                 tloss = 1000 # a large number
         
+            _losses_t.append([train_val_loss[0], train_val_acc[0], train_val_loss[1], train_val_acc[1]])
+
         losses.append(tloss)
+        _losses.append(_losses_t)
+    
+    plot_train_losses.append(_losses)
 
     """ INNER LOOP 2: TESTING """
 
     accuracies = []
+    _losses = []
     for example in xrange(len(edgelists)):
-      
         X, A, y, n = load_edgelist(path = edgelists[example][0],
                                    label = edgelists[example][1], 
                                    labels_dim = LABELS_DIM,
@@ -190,17 +211,27 @@ for b in xrange(200):
             "loss= {:.4f}".format(test_loss[0]),
             "accuracy= {:.4f}".format(test_acc[0]))
         accuracies.append(test_acc[0])
+        _losses.append([test_loss[0], test_acc[0]])
+
+    plot_test_losses.append(_losses)
 
     """ CHECK FOR COMPLETION """
 
     # all accuracies on the test set are > 0.9
     if ([i > 0.9 for i in accuracies] == [True]*len(accuracies)):
-        time_s = strftime("%Y-%m-%d-%H:%M:%S", gmtime())
-        model.save('bin/' + time_s + '-model.h5')
-        
-        model_json = model.to_json()
-        with open('bin/' + time_s + '-arch.json', 'w') as json_file:
-            json_file.write(model_json)
+        break
 
-        util.push_notify(time_s + ' => DONE') 
-        sys.exit(0)
+""" AT COMPLETION """
+
+directory = 'bin/' + strftime("%Y-%m-%d-%H:%M:%S", gmtime())
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+model.save_weights(directory + '/model.h5')
+cPickle.dump(plot_epochs, open(directory + '/epochs.p', 'wb'))
+cPickle.dump(plot_epoch_lengths, open(directory + '/epoch_lengths.p', 'wb'))
+cPickle.dump(plot_test_losses, open(directory + '/test_metrics.p', 'wb'))
+cPickle.dump(plot_train_losses, open(directory + '/train_metrics.p', 'wb'))
+
+util.push_notify(directory + ' => DONE') 
+sys.exit(0)
