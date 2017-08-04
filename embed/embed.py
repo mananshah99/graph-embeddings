@@ -12,14 +12,6 @@ import settings
 import util
 import embed_n2v as n2v
 
-# pipeline is
-# Given a list of node files,
-# embed each of the graphs with method X
-# save the embeddings to an output directory
-# return the embeddings to the user
-# user evaluates those embeddings
-# saves evaluated embedding results to a different folder
-
 def embed(input_directory,
           output_directory,
           method = 'n2v',
