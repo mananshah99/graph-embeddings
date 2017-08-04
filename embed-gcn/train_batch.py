@@ -24,14 +24,14 @@ import numpy as np
 import time
 from time import gmtime, strftime
 
-FILTER = 'localpool'    # 'chebyshev'
+FILTER = 'chebyshev'    # 'chebyshev'
 MAX_DEGREE = 2          # maximum polynomial degree
 SYM_NORM = True         # symmetric (True) vs. left-only (False) normalization
-NB_EPOCH = 30           # number of epochs
+NB_EPOCH = 20           # number of epochs
 PATIENCE = 90           # early stopping patience
 
-FEAT_DIM = 1024         # number of randomly initialized features / node
-LABELS_DIM = 4          # 2031       # number of examples
+FEAT_DIM = 256         # number of randomly initialized features / node
+LABELS_DIM = 3          # 2031       # number of examples
 
 X_in = Input(shape=(FEAT_DIM,))
 
@@ -67,7 +67,7 @@ for n, f in enumerate(os.listdir(settings.INDIVIDUAL_UW_GRAPH_DIR)):
     path = settings.INDIVIDUAL_UW_GRAPH_DIR + '/' + f
     edgelists.append((path, n))
 
-edgelists = [(i[0], e) for e, i in enumerate(edgelists[0:4])]
+edgelists = [(i[0], e) for e, i in enumerate(edgelists[0:LABELS_DIM])]
 
 print(edgelists)
 
