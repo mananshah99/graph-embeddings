@@ -24,14 +24,14 @@ import numpy as np
 import time
 from time import gmtime, strftime
 
-FILTER = 'chebyshev'    # 'chebyshev'
+FILTER = 'localpool' #'chebyshev'    # 'chebyshev'
 MAX_DEGREE = 2          # maximum polynomial degree
 SYM_NORM = True         # symmetric (True) vs. left-only (False) normalization
 NB_EPOCH = 20           # number of epochs
 PATIENCE = 90           # early stopping patience
 
 FEAT_DIM = 256         # number of randomly initialized features / node
-LABELS_DIM = 3          # 2031       # number of examples
+LABELS_DIM = 2          # 2031       # number of examples
 
 X_in = Input(shape=(FEAT_DIM,))
 
@@ -218,8 +218,8 @@ for b in xrange(400):
     """ CHECK FOR COMPLETION """
 
     # all accuracies on the test set are > 0.9
-    if ([i > 0.9 for i in accuracies] == [True]*len(accuracies)):
-        break
+    #if ([i > 0.9 for i in accuracies] == [True]*len(accuracies)):
+    #    break
 
 """ AT COMPLETION """
 

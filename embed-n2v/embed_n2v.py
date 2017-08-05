@@ -68,13 +68,14 @@ def embed_n2v(input_directory, # = settings.INDIVIDUAL_UW_GRAPH_DIR,
               weighted = False,
               verbose = False,
               sample = -1,
-              selected_nodes = ""): # = settings.INDIVIDUAL_UW_NODES_DIR 
+              selected_nodes = "",
+              overwrite = True): # = settings.INDIVIDUAL_UW_NODES_DIR 
 
     progress = tqdm(total = count_files(input_directory)) 
 
     for f in os.listdir(input_directory):
         name = f.split('/')[-1].split('.')[0]
-        if os.path.isfile(output_directory + '/' + name + '.emb'):
+        if os.path.isfile(output_directory + '/' + name + '.emb') and overwrite:
             progress.update(1)
             continue
         progress.set_description("Processing " + str(name))
