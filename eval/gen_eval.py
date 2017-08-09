@@ -5,7 +5,8 @@
 import snap
 import numpy as np
 from scipy.spatial import distance
-
+import random
+from tqdm import tqdm
 class GraphEvaluator():
     def __init__(self, graph_type = 'erdos-renyi', nnodes = 1000,
                         k = 3, graph_directory = '.'):
@@ -22,11 +23,11 @@ class GraphEvaluator():
         elif self.graph_type == 'full':
             G = snap.GenFull(snap.PUNGraph, self.nnodes)
         elif self.graph_type == 'circle':
-            G = snap.GenCircle(snap.PUNGraph, self.nnodes, IsDir=False)
+            G = snap.GenCircle(snap.PUNGraph, self.nnodes, False)
         elif self.graph_type == 'tree':
             G = snap.GenTree(snap.PUNGraph, Fanout=2, Levels=10, IsDir=False)
-        elif self.graph_tpye == 'erdos-renyi':
-            G = snap.GenRndGnm(snap.PUNGraph, self.nnodes, self.nnodes * 5, IsDir=False)
+        elif self.graph_type == 'erdos-renyi':
+            G = snap.GenRndGnm(snap.PUNGraph, self.nnodes, self.nnodes * 5, False)
         else:
             print "> Defaulting to full mode"
             G = snap.GenFull(snap.PUNGraph, self.nnodes)
@@ -48,7 +49,7 @@ class GraphEvaluator():
         
         return self.graph_directory
 
-    def evaluate(self, embeddings, metric=distance.sqeuclidean):
+    def matrix(self, embeddings, metric=distance.sqeuclidean):
         gl = self.graph_list
         assert len(gl) == len(embeddings)
         m = np.ndarray(shape=(len(gl), len(gl)))
@@ -61,3 +62,48 @@ class GraphEvaluator():
                     m[i][j] = metric(embeddings[str(i)], embeddings[str(j)])
 
         return m
+
+    def sample(self, iterator, k):
+        """
+        Samples k elements from an iterable object.
+
+        :param iterator: an object that is iterable
+        :param k: the number of items to sample
+        """
+        # fill the reservoir to start
+        result = [next(iterator) for _ in range(k)]
+
+        n = k - 1
+        for item in iterator:
+            n += 1
+            s = random.randint(0, n)
+            if s < k:
+                result[s] = item
+
+        return result
+
+    def evaluate(self, embeddings, N = 150, metric=distance.cosine, verbose=True):
+        m = self.matrix(embeddings, metric)
+        graph_ids = [i for i in xrange(len(embeddings))]
+        y = 0
+        n = 0
+        for i in tqdm(xrange(N), disable = not verbose):
+            ids = self.sample(iter(graph_ids), 3)
+            while(abs(ids[1] - ids[0]) == abs(ids[2] - ids[1])):
+                ids = self.sample(iter(graph_ids), 3)
+            
+            d_0_1 = m[ids[0]][ids[1]]
+            d_1_2 = m[ids[1]][ids[2]]
+           
+            if abs(ids[1] - ids[0]) > abs(ids[2] - ids[1]): # 0 and 1 are further than 1 and 2
+                if d_0_1 > d_1_2:
+                    y += 1
+                else:
+                    n += 1
+            else:
+                if d_0_1 < d_1_2:
+                    y += 1
+                else:
+                    n += 1
+        return y, n
+
