@@ -19,31 +19,34 @@ class GraphEvaluator():
     def base_graph(self):
         G = None
         if self.graph_type == 'star':
-            G = snap.GenStar(snap.PUNGraph, self.nnodes, IsDir=False)
+            G = snap.GenStar(snap.PUNGraph, self.nnodes, False)
         elif self.graph_type == 'full':
             G = snap.GenFull(snap.PUNGraph, self.nnodes)
         elif self.graph_type == 'circle':
             G = snap.GenCircle(snap.PUNGraph, self.nnodes, False)
         elif self.graph_type == 'tree':
             G = snap.GenTree(snap.PUNGraph, Fanout=2, Levels=10, IsDir=False)
-        elif self.graph_type == 'erdos-renyi':
+        elif self.graph_type == 'erdos-renyi' or self.graph_type == 'er':
             G = snap.GenRndGnm(snap.PUNGraph, self.nnodes, self.nnodes * 5, False)
+        elif self.graph_type == 'barabasi-albert' or self.graph_type == 'ba':
+            G = snap.GenPrefAttach(self.nnodes, 10)
         else:
             print "> Defaulting to full mode"
             G = snap.GenFull(snap.PUNGraph, self.nnodes)
 
         return G
 
-    def generate_graphs(self, base_graph, k):
+    def generate_graphs(self, base_graph, k, rewire_edge_percent):
         # generates k permutations of increasing complexity 
+        n_edges = base_graph.GetEdges()
         graphs = [base_graph]
         for i in range(1, k+1):
-            graphs.append(snap.GenRewire(base_graph, i))
+            graphs.append(snap.GenRewire(base_graph, i if not rewire_edge_percent else int((float(i) / (k + 1)) * n_edges)) )
         self.graph_list = graphs
 
-    def initialize(self):
+    def initialize(self, rewire_edge_percent = False):
         base = self.base_graph()
-        self.generate_graphs(base, self.k)
+        self.generate_graphs(base, self.k, rewire_edge_percent)
         for i, g in enumerate(self.graph_list):
             snap.SaveEdgeList(g, self.graph_directory + '/' + str(i) + '.edgelist')
         
@@ -64,12 +67,6 @@ class GraphEvaluator():
         return m
 
     def sample(self, iterator, k):
-        """
-        Samples k elements from an iterable object.
-
-        :param iterator: an object that is iterable
-        :param k: the number of items to sample
-        """
         # fill the reservoir to start
         result = [next(iterator) for _ in range(k)]
 
@@ -107,3 +104,7 @@ class GraphEvaluator():
                     n += 1
         return y, n
 
+    def evaluate_random(self, N = 150, metric=distance.cosine, verbose=True):
+        graph_ids = [i for i in xrange(len(self.graph_list))]
+        embeddings = {str(graph_ids[i]) : np.random.randn(128) for i in graph_ids}
+        return self.evaluate(embeddings, N, metric, verbose)
