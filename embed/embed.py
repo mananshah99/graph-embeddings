@@ -16,13 +16,15 @@ def embed(input_directory,
           output_directory,
           method = 'n2v',
           sample = -1,
-          selected_nodes = ""):
+          selected_nodes = "",
+          verbose = True,
+          overwrite = True):
 
     if method == 'n2v': 
         return n2v.embed_n2v(input_directory, output_directory,
-                        weighted = False, verbose = False,
+                        weighted = False, verbose = verbose,
                         sample = sample, selected_nodes = selected_nodes,
-                        overwrite = True)
+                        overwrite = overwrite)
 
     if method == 'gcn':
         return -1 # not implemented yet, need to include training phase as well
