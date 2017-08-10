@@ -36,17 +36,20 @@ class GraphEvaluator():
 
         return G
 
-    def generate_graphs(self, base_graph, k, rewire_edge_percent):
+    def graph(self):
+        return self.graph_list[0]
+
+    def generate_graphs(self, base_graph, k):
         # generates k permutations of increasing complexity 
         n_edges = base_graph.GetEdges()
         graphs = [base_graph]
         for i in range(1, k+1):
-            graphs.append(snap.GenRewire(base_graph, i if not rewire_edge_percent else int((float(i) / (k + 1)) * n_edges)) )
+            graphs.append(snap.GenRewire(base_graph, int((float(i) / (k + 1)) * n_edges)) )
         self.graph_list = graphs
 
-    def initialize(self, rewire_edge_percent = False):
+    def initialize(self):
         base = self.base_graph()
-        self.generate_graphs(base, self.k, rewire_edge_percent)
+        self.generate_graphs(base, self.k)
         for i, g in enumerate(self.graph_list):
             snap.SaveEdgeList(g, self.graph_directory + '/' + str(i) + '.edgelist')
         
