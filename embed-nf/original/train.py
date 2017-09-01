@@ -1,13 +1,3 @@
-# Visualizing neural fingerprints.
-# This file recreates the plots in Figure 4 of the paper.
-#
-# It first learns a neural fingerprint with a linear model on top.
-# Then, it
-#
-# David Duvenaud
-# Dougal Maclaurin
-# 2015
-
 import os, pickle
 import autograd.numpy as np
 import autograd.numpy.random as npr
@@ -31,13 +21,15 @@ from neuralfingerprint import build_batched_grad, degrees, build_standard_net
 from neuralfingerprint.util import rmse
 from neuralfingerprint.data_util import remove_duplicates
 
+import networkx as nx
+
 task_params = {'N_train'     : 35, #800,
                'N_valid'     : 10, #150,
                'N_test'      : 10, #170,
                'target_name' : 'percent-rewire', #'measured log solubility in mols per litre',
                'data_file'   : 'rewire.csv'} #'delaney.csv'}
 
-num_epochs = 30
+num_epochs = 10
 batch_size = 10 #100
 normalize = 0
 dropout = 0
@@ -171,13 +163,26 @@ def draw_molecule_with_highlights(filename, smiles, highlight_atoms):
     drawoptions.elemDict = {}   # Don't color nodes based on their element.
     drawoptions.bgColor=None
 
-    mol = Chem.MolFromSmiles(smiles)
-    fig = Draw.MolToMPL(mol, highlightAtoms=highlight_atoms, size=figsize, options=drawoptions,fitImage=False)
+    print "SMILES: ", smiles
+    print "HIGHLIGHT: ", highlight_atoms
+    
+    graph = nx.read_edgelist(smiles)
+    color_map = []
+    for node in graph.nodes():
+        if node in highlight_atoms:
+            color_map.append('red')
+            print "HIGHLIGHTED"
+        else:
+            color_map.append('white')
 
-    fig.gca().set_axis_off()
-    fig.savefig(filename, bbox_inches='tight')
-    plt.close(fig)
+    nx.draw(graph, node_color = color_map, with_labels = False)
 
+    #mol = Chem.MolFromSmiles(smiles)
+    #fig = Draw.MolToMPL(mol, highlightAtoms=highlight_atoms, size=figsize, options=drawoptions,fitImage=False)
+    #
+    plt.gca().set_axis_off()
+    plt.savefig(filename, bbox_inches='tight')
+    plt.close()
 
 def construct_atom_neighbor_list(array_rep):
     atom_neighbour_list = []
@@ -199,9 +204,10 @@ def plot(trained_weights):
        build_convnet_fingerprint_fun(**conv_arch_params)
     atom_activations, array_rep = compute_atom_activations(trained_weights, train_smiles)
 
+    print "Inputs are the trained weights and ", np.asarray(train_smiles[0:2])
     a = output_layer_fun(trained_weights, np.asarray(train_smiles[0:2]))
     print(a)
-        
+
     if not os.path.exists('figures'): os.makedirs('figures')
 
     parent_molecule_dict = {}
@@ -256,10 +262,12 @@ def plot(trained_weights):
 
 if __name__ == '__main__':
     # Training.  Only need to run this part if we haven't yet saved results.pkl
-    trained_network_weights = train_neural_fingerprint()
-    with open('results.pkl', 'w') as f:
-        pickle.dump(trained_network_weights, f)
+    # trained_network_weights = train_neural_fingerprint()
+    # with open('results.pkl', 'w') as f:
+    #    pickle.dump(trained_network_weights, f)
+    
     # Plotting.
     with open('results.pkl') as f:
         trained_weights = pickle.load(f)
+
     plot(trained_weights)
