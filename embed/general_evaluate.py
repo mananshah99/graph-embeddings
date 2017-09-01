@@ -7,9 +7,9 @@ from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join
 
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-n2v')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/eval/')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/embed-n2v')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/common/')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/eval/')
 import settings
 import util
 from embed import embed
