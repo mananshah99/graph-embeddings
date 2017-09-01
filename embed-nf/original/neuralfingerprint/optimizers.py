@@ -31,12 +31,13 @@ def adam(grad, x, callback=None, num_iters=100,
     v = np.zeros(len(x))
     for i in range(num_iters):
         g = grad(x, i)
-        if callback: callback(x, i)
+        new_lr = callback(x, i)
+        
         m = (1 - b1) * g      + b1 * m  # First  moment estimate.
         v = (1 - b2) * (g**2) + b2 * v  # Second moment estimate.
         mhat = m / (1 - b1**(i + 1))    # Bias correction.
         vhat = v / (1 - b2**(i + 1))
-        x -= step_size*mhat/(np.sqrt(vhat) + eps)
+        x -= new_lr*mhat/(np.sqrt(vhat) + eps)
     return x
 
 def bfgs(obj_and_grad, x, callback=None, num_iters=100):
