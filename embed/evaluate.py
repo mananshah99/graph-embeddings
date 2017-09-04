@@ -82,7 +82,6 @@ def run(graph_type, nnodes, f):
                         method = 'nf-original')
 
 
-    print embeddings
     #TODO: Write method 13: hamilton graphSAGE with train and test directories
 
 
