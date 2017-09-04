@@ -9,11 +9,12 @@ import random
 from tqdm import tqdm
 class GraphEvaluator():
     def __init__(self, graph_type = 'erdos-renyi', nnodes = 1000,
-                        k = 3, graph_directory = '.'):
+                        k = 50, graph_directory = '.'):
         self.graph_type = graph_type
         self.graph_directory = graph_directory
         self.nnodes = nnodes
-        self.graph_list = []
+        self.test_graph_list = []
+        self.train_graph_list = []
         self.k = k
 
     def base_graph(self):
@@ -37,26 +38,43 @@ class GraphEvaluator():
         return G
 
     def graph(self):
-        return self.graph_list[0]
+        return self.train_graph_list[0]
 
-    def generate_graphs(self, base_graph, k):
+    def get_train_graphs(self):
+        return self.train_graph_list
+
+    def get_test_graphs(self):
+        return self.test_graph_list
+
+    def generate_graphs(self, base_graph, k, split = True):
+        def split_list(a_list):
+            half = len(a_list)/2
+            return a_list[:half], a_list[half:] 
+        
         # generates k permutations of increasing complexity 
         n_edges = base_graph.GetEdges()
         graphs = [base_graph]
         for i in range(1, k+1):
             graphs.append(snap.GenRewire(base_graph, int((float(i) / (k + 1)) * n_edges)) )
-        self.graph_list = graphs
+
+        # 50 percent train, 50 percent test
+        train, test = split_list(graphs)
+        self.train_graph_list = train
+        self.test_graph_list = test
 
     def initialize(self):
         base = self.base_graph()
         self.generate_graphs(base, self.k)
-        for i, g in enumerate(self.graph_list):
-            snap.SaveEdgeList(g, self.graph_directory + '/' + str(i) + '.edgelist')
+        for i, g in enumerate(self.train_graph_list):
+            snap.SaveEdgeList(g, self.graph_directory + '/train/' + str(i) + '.edgelist')
+
+        for i, g in enumerate(self.test_graph_list):
+            snap.SaveEdgeList(g, self.graph_directory + '/test/' + str(len(self.train_graph_list) + i) + '.edgelist')
         
         return self.graph_directory
 
     def matrix(self, embeddings, metric=distance.sqeuclidean):
-        gl = self.graph_list
+        gl = self.test_graph_list
         assert len(gl) == len(embeddings)
         m = np.ndarray(shape=(len(gl), len(gl)))
         
@@ -108,6 +126,6 @@ class GraphEvaluator():
         return y, n
 
     def evaluate_random(self, N = 150, metric=distance.cosine, verbose=True):
-        graph_ids = [i for i in xrange(len(self.graph_list))]
+        graph_ids = [i for i in xrange(len(self.test_graph_list))]
         embeddings = {str(graph_ids[i]) : np.random.randn(128) for i in graph_ids}
         return self.evaluate(embeddings, N, metric, verbose)
