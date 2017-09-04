@@ -101,7 +101,8 @@ ENV/
 .mypy_cache/
 
 # misc
-.jpg
-.png
-.html
+*.jpg
+*.png
+*.png
+*.html
 embed-gcn/bin/
