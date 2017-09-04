@@ -25,6 +25,7 @@ def embed(train_input_directory,    # directory of train graphs
           selected_nodes = "",
 
           # nf-original
+          tmp_dir = "/dfs/scratch0/manans/tmp.csv",
           weights = "/dfs/scratch0/manans/results.pkl",
           train = True,
 
@@ -42,10 +43,11 @@ def embed(train_input_directory,    # directory of train graphs
 
     if method == 'nf-o' or method == 'nf-original':
         if train:
-            nfo.train_nf_original(train_input_directory, train_label_mapping)
+            nfo.train_nf_original(train_input_directory, train_label_mapping,
+                                tmp_dir = tmp_dir, output_directory = weights)
 
         return nfo.embed_nf_original(test_input_directory, test_output_directory,
-                                    weights = weights, 
+                                    weights = weights,
                                     verbose = verbose, overwrite = overwrite)
 
     if method == 'nf-k' or method == 'nf-keras':
