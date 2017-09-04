@@ -44,7 +44,7 @@ task_params = {'N_train'     : 35,
                'target_name' : 'label',
                'data_file'   : 'rewire.csv'}
 
-num_epochs = 5
+num_epochs = 50
 batch_size = 10 #100
 dropout = 0
 activation = relu
@@ -104,8 +104,9 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
                     np.sqrt(np.mean((validation_preds - validation_raw_targets) ** 2)),
             print ""
 
-        if len(training_curve) > 2 and training_curve[-2] < training_curve[-1]:
-            train_params['learn_rate'] /= 10.
+        if len(training_curve) > 3 and training_curve[-2] < training_curve[-1] \
+                and training_curve[-3] < training_curve[-2]:
+            train_params['learn_rate'] /= 2.
             print "\t Updated learning rate =>", train_params['learn_rate']
         else:
             print "\t Learning rate is constant =>", train_params['learn_rate']
@@ -200,7 +201,7 @@ def embed_nf_original(input_directory,
        build_convnet_fingerprint_fun(**conv_arch_params)
    
     progress = tqdm(total = count_files(input_directory), disable = not verbose)
-    files = np.asarray([input_directory + i for i in os.listdir(input_directory)])
+    files = np.asarray([input_directory + "/" +  i for i in os.listdir(input_directory)])
     embeddings = output_layer_fun(trained_weights, np.asarray(files))
 
     output_map = {}
