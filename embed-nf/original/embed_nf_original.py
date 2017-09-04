@@ -73,10 +73,10 @@ def parse_training_params(params):
                        'b2'          : params['b2'],
                        'param_scale' : params['init_scale']}
 
-    vanilla_net_params = {'layer_sizes':[params['fp_length']],  # Linear regression.
-                          'normalize':normalize,
-                          'L2_reg': params['l2_penalty'],
-                          'L1_reg': params['l1_penalty'],
+    vanilla_net_params = {'layer_sizes' : [params['fp_length']],  # Linear regression.
+                          'normalize'   : normalize,
+                          'L2_reg'      : params['l2_penalty'],
+                          'L1_reg'      : params['l1_penalty'],
                           'activation_function':activation}
     return nn_train_params, vanilla_net_params
 
@@ -126,24 +126,20 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
         return undo_norm(pred_fun(trained_weights, new_smiles))
     return predict_func, trained_weights, training_curve
 
-def train_neural_fingerprint(train_directory, tmpdir='/dfs/scratch0/manans/tmp.csv'):
+def train_neural_fingerprint(train_directory, labels_mapping, tmp_dir):
     global task_params
-    # set some parameters
     task_params['N_train'] = int(len(os.listdir(train_directory)) * 0.7)
     task_params['N_valid'] = int(len(os.listdir(train_directory)) * 0.1)
     task_params['N_test']  = int(len(os.listdir(train_directory)) * 0.2)
-    task_params['data_file'] = tmpdir
+    task_params['data_file'] = tmp_dir
 
     directory = train_directory
-    output = open(tmpdir, 'wb+')
-    
-    files = os.listdir(directory)
-    files = sorted(files, key = lambda x : int(x.split('.')[0]))
-    total_rewires = len(files) * 2
+    output = open(tmp_dir, 'wb+')
 
+    files = os.listdir(directory)
     output.write('graph,label\n')
     for f in files:
-        output.write(directory + f + ',' + str(float(f.split('.')[0])/total_rewires) + '\n')
+        output.write(directory + '/' +  f + ',' + str(labels_mapping[f]) + '\n')
     output.close()
     
     print "Loading data..."
@@ -172,8 +168,6 @@ def train_neural_fingerprint(train_directory, tmpdir='/dfs/scratch0/manans/tmp.c
     nn_train_params, vanilla_net_params = parse_training_params(params)
     conv_arch_params['return_atom_activations'] = False
 
-    print "Convnet fingerprints with neural net"
-
     loss_fun, pred_fun, conv_parser = \
         build_conv_deep_net(conv_arch_params, vanilla_net_params, params['l2_penalty'])
     num_weights = len(conv_parser)
@@ -185,18 +179,17 @@ def train_neural_fingerprint(train_directory, tmpdir='/dfs/scratch0/manans/tmp.c
     print_performance(predict_func)
     return trained_weights
 
-def train_nf_original(train_directory, output_directory = '/dfs/scratch0/manans/results.pkl'):
-    trained_network_weights = train_neural_fingerprint(train_directory)
-    with open('/dfs/scratch0/manans/results.pkl', 'wb+') as f:
+def train_nf_original(train_directory, labels_mapping, tmp_dir, output_directory):
+    trained_network_weights = train_neural_fingerprint(train_directory, labels_mapping, tmp_dir)
+
+    with open(output_directory, 'wb+') as f:
         pickle.dump(trained_network_weights, f)
  
 def embed_nf_original(input_directory, 
                       output_directory, 
-                      weights='/afs/cs.stanford.edu/u/manans/graph-embeddings/embed-nf/original/results.pkl',
+                      weights,
                       verbose = False,
                       overwrite = True):
-
-    print "ON EMBED NF ORIGINAL CODE -----"
 
     trained_weights = None
     with open(weights) as f:
