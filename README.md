@@ -1,6 +1,6 @@
 # graph-embeddings
 
-Methods to generate and evaluate *D*-dimensional feature vectors (embeddings) from unimodal, unweighted graphs of arbitrary complexity. A simple example is illustrated below: each call to the embed function returns a map embeddings and saves the embeddings to a specified directory.
+Methods to generate and evaluate *D*-dimensional feature vectors (embeddings) from unimodal, unweighted graphs of arbitrary complexity. A simple example is illustrated below: each call to the embed function returns a map of embeddings and saves the embeddings to a specified directory.
 
 ```py
 import os
