@@ -84,9 +84,10 @@ def run(graph_type, nnodes, k, f):
         os.system('rm ' + base_dir + '-emb/test/*')
     '''
     # method 12: nf-original
+    header += "nf-original,"
     train_labels = {}
-    for f in os.listdir(base_dir + '/train'):
-        train_labels[f] = float(f.split('.')[0])/k
+    for fl in os.listdir(base_dir + '/train'):
+        train_labels[fl] = float(fl.split('.')[0])/k
 
     embeddings = embed(train_input_directory    = base_dir + '/train',
                         train_label_mapping     = train_labels,
@@ -95,6 +96,10 @@ def run(graph_type, nnodes, k, f):
                         method = 'nf-original', 
                         train = True,
                         verbose = False)
+
+    v = stats([accuracy(e.evaluate(embeddings)) for i in xrange(100)])
+    means += v[0] + ","
+    stds  += v[1] + ","
 
     # remove ending comma
     header = header[:-1]
