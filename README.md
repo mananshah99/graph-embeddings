@@ -7,20 +7,20 @@ import os
 from embed import embed
 
 # Directories with stored graph edgelist representations
-train_graph_directory	= 'train_graphs/'
-train_graph_labels 		= {x : x.split('.')[0] for x in os.listdir(train_graph_directory)}
-test_graph_directory	= 'test_graphs/'
-test_graph_output		= 'test_graph_embeddings/'
+train_graph_directory     = 'train_graphs/'
+train_graph_labels        = {x : x.split('.')[0] for x in os.listdir(train_graph_directory)}
+test_graph_directory      = 'test_graphs/'
+test_graph_output         = 'test_graph_embeddings/'
 
 node2vec_embeddings = \
-	embed(train_input_directory 	= None, # node2vec is unsupervised
+	embed(train_input_directory 	        = None, # node2vec is unsupervised
 		 	train_label_mappping 	= None,
 		 	test_input_directory	= test_graph_directory,
 		 	test_output_directory	= test_graph_output,
 		 	method = 'n2v')
 
 fingerprint_embeddings = \
-	embed(train_input_directory 	= train_graph_directory, # nf is supervised
+	embed(train_input_directory 	        = train_graph_directory, # nf is supervised
 		 	train_label_mappping 	= train_graph_labels,
 		 	test_input_directory	= test_graph_directory,
 		 	test_output_directory	= test_graph_output,
