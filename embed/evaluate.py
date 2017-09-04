@@ -31,59 +31,70 @@ out = open(EXP_FILE, "a")
 def accuracy(tup):
     return tup[0] / float(tup[0] + tup[1])
 
-def metrics(l):
+def stats(l):
     return str(np.mean(l)), str(np.std(l))
 
-def run(graph_type, nnodes, f):
-    os.system('rm /dfs/scratch0/manans/rewire-exp-' + graph_type + '-emb/*')
+def run(graph_type, nnodes, k, f):
+    base_dir = '/dfs/scratch0/manans/rewire-exp-' + graph_type
+    
+    # clean directories
+    os.system('rm ' + base_dir + '/train/*')
+    os.system('rm ' + base_dir + '/test/*')
+    os.system('rm ' + base_dir + '-emb/train/*')
+    os.system('rm ' + base_dir + '-emb/test/*')
 
-    # every instance of 'run' operates on the same set of graphs, initialized
-    # by instance 'e' of GraphEvaluator
     e = GraphEvaluator(graph_type = graph_type,
-                        nnodes = nnodes, 
-                        k = 100, 
-                        graph_directory = '/dfs/scratch0/manans/rewire-exp-' + graph_type)
+                        nnodes = nnodes, k = k, 
+                        graph_directory = base_dir)
     e.initialize()
 
-    header = graph_type + '_k=' + str(50) + '_n=' + str(nnodes) + '_e=' + str(e.graph().GetEdges()) + '_t=' + datetime.datetime.now().isoformat().split('.')[0] + ','
-    means = " ," # first column has no associated values, just graph description
+    header = graph_type + \
+            '_k=' + str(k) + \
+            '_n=' + str(nnodes) + \
+            '_e=' + str(e.graph().GetEdges()) + \
+            '_t=' + datetime.datetime.now().isoformat().split('.')[0] + ','
+
+    means = " ,"
     stds  = " ,"
 
     '''
     # method 1: random
     header += "random,"
-    v = metrics([accuracy(e.evaluate_random(verbose = False)) for i in xrange(100)])
+    v = stats([accuracy(e.evaluate_random()) for i in xrange(100)])
     means += v[0] + "," 
     stds  += v[1] + ","
 
-    # method 2-11: node2vec [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    # method 2-11: node2vec
     for i in tqdm([10, 20, 30, 40, 50, 60, 70, 80, 90, -1]):
         header += ("n2v-0." + str(i) + "," if i > 0 else "n2v-1.0,")
 
-        # only embed the test set (discard train)
-        embeddings = embed('/dfs/scratch0/manans/rewire-exp-' + graph_type + '/test',
-                            '/dfs/scratch0/manans/rewire-exp-' + graph_type + '-emb/test',
-                            method = 'n2v', sample = int((float(i) / 100) * nnodes) if i > 0 else -1, verbose = False)
+        embeddings = embed(train_input_directory    = None,
+                            train_label_mapping     = None,
+                            test_input_directory    = base_dir + '/test',
+                            test_output_directory   = base_dir + '-emb/test',
+                            method = 'n2v', 
+                            sample = int((float(i) / 100) * nnodes) if i > 0 else -1, 
+                            verbose = False)
 
-        v = metrics([accuracy(e.evaluate(embeddings, verbose = False)) for i in xrange(100)])
+        v = stats([accuracy(e.evaluate(embeddings)) for i in xrange(100)])
         means += v[0] + "," 
         stds  += v[1] + ","
 
-        os.system('rm /dfs/scratch0/manans/rewire-exp-' + graph_type + '-emb/train/*')
-        os.system('rm /dfs/scratch0/manans/rewire-exp-' + graph_type + '-emb/test/*')
-
+        os.system('rm ' + base_dir + '-emb/train/*')
+        os.system('rm ' + base_dir + '-emb/test/*')
     '''
-    
     # method 12: nf-original
+    train_labels = {}
+    for f in os.listdir(base_dir + '/train'):
+        train_labels[f] = float(f.split('.')[0])/k
 
-    embeddings = embed('/dfs/scratch0/manans/rewire-exp-' + graph_type + '/train/',
-                        '/dfs/scratch0/manans/rewire-exp-' + graph_type + '/test/', 
-                        '/dfs/scratch0/manans/rewire-exp-' + graph_type + '-emb/test/',
-                        method = 'nf-original')
-
-
-    #TODO: Write method 13: hamilton graphSAGE with train and test directories
-
+    embeddings = embed(train_input_directory    = base_dir + '/train',
+                        train_label_mapping     = train_labels,
+                        test_input_directory    = base_dir + '/test', 
+                        test_output_directory   = base_dir + '-emb/test/',
+                        method = 'nf-original', 
+                        train = True,
+                        verbose = False)
 
     # remove ending comma
     header = header[:-1]
@@ -95,7 +106,7 @@ def run(graph_type, nnodes, f):
     f.write(stds + "\n")
 
 for i in range(50, 500, 50): # i is nnodes
-    run('er', i, out)
-    run('ba', i, out)
+    run('er', i, 100, out)
+    run('ba', i, 100, out)
 
 out.close()

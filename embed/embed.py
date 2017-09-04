@@ -14,17 +14,19 @@ import util
 import embed_n2v as n2v
 import embed_nf_original as nfo
 
-def embed(train_input_directory,
-          test_input_directory,
-          test_output_directory,
-          method,
+def embed(train_input_directory,    # directory of train graphs
+          train_label_mapping,      # map from train graph name -> label
+          test_input_directory,     # directory of test graphs
+          test_output_directory,    # directory to output test graph embeddings
+          method,                   # embedding method
 
           # node2vec
           sample = -1,
           selected_nodes = "",
 
           # nf-original
-          weights = None,
+          weights = "/dfs/scratch0/manans/results.pkl",
+          train = True,
 
           verbose = True,
           overwrite = True):
@@ -39,10 +41,11 @@ def embed(train_input_directory,
         return -1 # not implemented yet, need to include training phase as well
 
     if method == 'nf-o' or method == 'nf-original':
-
-        nfo.train_nf_original(train_input_directory)
+        if train:
+            nfo.train_nf_original(train_input_directory, train_label_mapping)
 
         return nfo.embed_nf_original(test_input_directory, test_output_directory,
+                                    weights = weights, 
                                     verbose = verbose, overwrite = overwrite)
 
     if method == 'nf-k' or method == 'nf-keras':
