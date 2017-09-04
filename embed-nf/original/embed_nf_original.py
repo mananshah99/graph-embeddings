@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 import os
 import sys
-sys.path.append('..')
+sys.path.append('../embed-nf/original/')
 
 # Neural Fingerprint
 from neuralfingerprint import load_data, relu
@@ -38,6 +38,16 @@ def count_files(in_directory):
             in map(joiner, os.listdir(in_directory))
             )
 
+task_params = {'N_train'     : 35,
+               'N_valid'     : 10,
+               'N_test'      : 10,
+               'target_name' : 'label',
+               'data_file'   : 'rewire.csv'}
+
+num_epochs = 5
+batch_size = 10 #100
+dropout = 0
+activation = relu
 normalize = 0
 params = {'fp_length': 50, # 20,
             'fp_depth': 3,
@@ -55,11 +65,138 @@ conv_arch_params = {'num_hidden_features' : conv_layer_sizes,
                     'normalize' : normalize,
                     'return_atom_activations':False}
 
+def parse_training_params(params):
+    nn_train_params = {'num_epochs'  : num_epochs,
+                       'batch_size'  : batch_size,
+                       'learn_rate'  : params['learn_rate'],
+                       'b1'          : params['b1'],
+                       'b2'          : params['b2'],
+                       'param_scale' : params['init_scale']}
+
+    vanilla_net_params = {'layer_sizes':[params['fp_length']],  # Linear regression.
+                          'normalize':normalize,
+                          'L2_reg': params['l2_penalty'],
+                          'L1_reg': params['l1_penalty'],
+                          'activation_function':activation}
+    return nn_train_params, vanilla_net_params
+
+def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, train_params,
+             validation_smiles=None, validation_raw_targets=None):
+    """loss_fun has inputs (weights, smiles, targets)"""
+    print "Total number of weights in the network:", num_weights
+    npr.seed(0)
+    init_weights = npr.randn(num_weights) * train_params['param_scale']
+    train_targets, undo_norm = normalize_array(train_raw_targets)
+
+    training_curve = []
+    def callback(weights, iter):
+        if True or iter % 10 == 0:
+            # print "max of weights", np.max(np.abs(weights))
+            train_preds = undo_norm(pred_fun(weights, train_smiles))
+            cur_loss = loss_fun(weights, train_smiles, train_targets)
+            training_curve.append(cur_loss)
+
+            print "Iteration", iter, "loss", cur_loss, "train RMSE", \
+                np.sqrt(np.mean((train_preds - train_raw_targets)**2)),
+            if validation_smiles is not None:
+                validation_preds = undo_norm(pred_fun(weights, validation_smiles))
+                print "Validation RMSE", iter, ":", \
+                    np.sqrt(np.mean((validation_preds - validation_raw_targets) ** 2)),
+            print ""
+
+        if len(training_curve) > 2 and training_curve[-2] < training_curve[-1]:
+            train_params['learn_rate'] /= 10.
+            print "\t Updated learning rate =>", train_params['learn_rate']
+        else:
+            print "\t Learning rate is constant =>", train_params['learn_rate']
+        
+        return train_params['learn_rate']
+        
+    grad_fun = grad(loss_fun)
+    grad_fun_with_data = build_batched_grad(grad_fun, train_params['batch_size'],
+                                            train_smiles, train_targets)
+
+    num_iters = train_params['num_epochs'] * len(train_smiles) / train_params['batch_size']
+    trained_weights = adam(grad_fun_with_data, init_weights, callback=callback,
+                           num_iters=num_iters, step_size=train_params['learn_rate'],
+                           b1=train_params['b1'], b2=train_params['b2'])
+
+    def predict_func(new_smiles):
+        """Returns to the original units that the raw targets were in."""
+        return undo_norm(pred_fun(trained_weights, new_smiles))
+    return predict_func, trained_weights, training_curve
+
+def train_neural_fingerprint(train_directory, tmpdir='/dfs/scratch0/manans/tmp.csv'):
+    global task_params
+    # set some parameters
+    task_params['N_train'] = int(len(os.listdir(train_directory)) * 0.7)
+    task_params['N_valid'] = int(len(os.listdir(train_directory)) * 0.1)
+    task_params['N_test']  = int(len(os.listdir(train_directory)) * 0.2)
+    task_params['data_file'] = tmpdir
+
+    directory = train_directory
+    output = open(tmpdir, 'wb+')
+    
+    files = os.listdir(directory)
+    files = sorted(files, key = lambda x : int(x.split('.')[0]))
+    total_rewires = len(files) * 2
+
+    output.write('graph,label\n')
+    for f in files:
+        output.write(directory + f + ',' + str(float(f.split('.')[0])/total_rewires) + '\n')
+    output.close()
+    
+    print "Loading data..."
+    traindata, valdata, testdata = load_data(task_params['data_file'],
+                        (task_params['N_train'], task_params['N_valid'], task_params['N_test']),
+                        input_name='graph', target_name=task_params['target_name'])
+    train_inputs, train_targets = traindata
+    val_inputs, val_targets = valdata
+
+    print "Regression on", task_params['N_train'], "training points."
+    def print_performance(pred_func):
+        train_preds = pred_func(train_inputs)
+        val_preds = pred_func(val_inputs)
+        print "\nPerformance (RMSE) on " + task_params['target_name'] + ":"
+        print "Train:", rmse(train_preds, train_targets)
+        print "Test: ", rmse(val_preds,  val_targets)
+        print "-" * 80
+        return rmse(val_preds,  val_targets)
+
+    print "-" * 80
+    print "Mean predictor"
+    y_train_mean = np.mean(train_targets)
+    print_performance(lambda x : y_train_mean)
+
+    print "Task params", params
+    nn_train_params, vanilla_net_params = parse_training_params(params)
+    conv_arch_params['return_atom_activations'] = False
+
+    print "Convnet fingerprints with neural net"
+
+    loss_fun, pred_fun, conv_parser = \
+        build_conv_deep_net(conv_arch_params, vanilla_net_params, params['l2_penalty'])
+    num_weights = len(conv_parser)
+
+    predict_func, trained_weights, conv_training_curve = \
+         train_nn(pred_fun, loss_fun, num_weights, train_inputs, train_targets,
+                 nn_train_params, validation_smiles=val_inputs, validation_raw_targets=val_targets)
+
+    print_performance(predict_func)
+    return trained_weights
+
+def train_nf_original(train_directory, output_directory = '/dfs/scratch0/manans/results.pkl'):
+    trained_network_weights = train_neural_fingerprint(train_directory)
+    with open('/dfs/scratch0/manans/results.pkl', 'wb+') as f:
+        pickle.dump(trained_network_weights, f)
+ 
 def embed_nf_original(input_directory, 
                       output_directory, 
                       weights='/afs/cs.stanford.edu/u/manans/graph-embeddings/embed-nf/original/results.pkl',
                       verbose = False,
                       overwrite = True):
+
+    print "ON EMBED NF ORIGINAL CODE -----"
 
     trained_weights = None
     with open(weights) as f:
@@ -80,3 +217,7 @@ def embed_nf_original(input_directory,
             for q in embeddings[i]:
                 f2.write(str(q))
                 f2.write(' ')
+        progress.update(1)
+    progress.close()
+
+    return output_map
