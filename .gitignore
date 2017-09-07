@@ -112,3 +112,11 @@ embed-nf/original/figures/
 embed-nf/original/old/
 embed-nf/original/results.pkl
 embed-nf/original/rewire.csv
+embed-nf/keras/data/
+embed-nf/keras/model.npz
+embed-nf/keras/pydot.py
+
+embed-gcn/data/
+embed-gcn/exp/
+embed-gcn/test.edgelist
+embed-gcn/train.py
