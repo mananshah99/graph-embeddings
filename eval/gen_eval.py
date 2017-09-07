@@ -100,9 +100,9 @@ class GraphEvaluator():
 
         return result
 
-    def evaluate(self, embeddings, N = 150, metric=distance.cosine, verbose=True):
-        m = self.matrix(embeddings, metric)
-        graph_ids = [i for i in xrange(len(embeddings))]
+    def evaluate(self, embeddings, N = 150, metric=distance.cosine, verbose=False):
+        #m = self.matrix(embeddings, metric)
+        graph_ids = [int(i) for i in embeddings.keys()]
         y = 0
         n = 0
         for i in tqdm(xrange(N), disable = not verbose):
@@ -110,8 +110,8 @@ class GraphEvaluator():
             while(abs(ids[1] - ids[0]) == abs(ids[2] - ids[1])):
                 ids = self.sample(iter(graph_ids), 3)
             
-            d_0_1 = m[ids[0]][ids[1]]
-            d_1_2 = m[ids[1]][ids[2]]
+            d_0_1 = metric(embeddings[str(ids[0])], embeddings[str(ids[1])])
+            d_1_2 = metric(embeddings[str(ids[1])], embeddings[str(ids[2])])
            
             if abs(ids[1] - ids[0]) > abs(ids[2] - ids[1]): # 0 and 1 are further than 1 and 2
                 if d_0_1 > d_1_2:

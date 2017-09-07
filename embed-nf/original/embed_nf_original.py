@@ -10,7 +10,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-import os
 import sys
 sys.path.append('../embed-nf/original/')
 
@@ -44,8 +43,8 @@ task_params = {'N_train'     : 35,
                'target_name' : 'label',
                'data_file'   : 'rewire.csv'}
 
-num_epochs = 50
-batch_size = 10 #100
+num_epochs = 10
+batch_size = 20 #100
 dropout = 0
 activation = relu
 normalize = 0
@@ -104,8 +103,7 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
                     np.sqrt(np.mean((validation_preds - validation_raw_targets) ** 2)),
             print ""
 
-        if len(training_curve) > 3 and training_curve[-2] < training_curve[-1] \
-                and training_curve[-3] < training_curve[-2]:
+        if len(training_curve) > 3 and training_curve[-2] < training_curve[-1]:
             train_params['learn_rate'] /= 2.
             print "\t Updated learning rate =>", train_params['learn_rate']
         else:
@@ -117,7 +115,8 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
     grad_fun_with_data = build_batched_grad(grad_fun, train_params['batch_size'],
                                             train_smiles, train_targets)
 
-    num_iters = train_params['num_epochs'] * len(train_smiles) / train_params['batch_size']
+    num_iters = train_params['num_epochs'] #* len(train_smiles) / train_params['batch_size']
+    print "N_ITER", num_iters
     trained_weights = adam(grad_fun_with_data, init_weights, callback=callback,
                            num_iters=num_iters, step_size=train_params['learn_rate'],
                            b1=train_params['b1'], b2=train_params['b2'])
@@ -127,12 +126,15 @@ def train_nn(pred_fun, loss_fun, num_weights, train_smiles, train_raw_targets, t
         return undo_norm(pred_fun(trained_weights, new_smiles))
     return predict_func, trained_weights, training_curve
 
-def train_neural_fingerprint(train_directory, labels_mapping, tmp_dir):
+def train_neural_fingerprint(train_directory, labels_mapping, tmp_dir, n_epochs=15):
     global task_params
     task_params['N_train'] = int(len(os.listdir(train_directory)) * 0.7)
-    task_params['N_valid'] = int(len(os.listdir(train_directory)) * 0.1)
-    task_params['N_test']  = int(len(os.listdir(train_directory)) * 0.2)
+    task_params['N_valid'] = int(len(os.listdir(train_directory)) * 0.01)
+    task_params['N_test']  = int(len(os.listdir(train_directory)) * 0.01)
     task_params['data_file'] = tmp_dir
+
+    global num_epochs 
+    num_epochs = n_epochs
 
     directory = train_directory
     output = open(tmp_dir, 'wb+')
@@ -180,9 +182,11 @@ def train_neural_fingerprint(train_directory, labels_mapping, tmp_dir):
     print_performance(predict_func)
     return trained_weights
 
-def train_nf_original(train_directory, labels_mapping, tmp_dir, output_directory):
-    trained_network_weights = train_neural_fingerprint(train_directory, labels_mapping, tmp_dir)
+def train_nf_original(train_directory, labels_mapping, tmp_dir, output_directory, n_epochs=15):
+    
+    trained_network_weights = train_neural_fingerprint(train_directory, labels_mapping, tmp_dir, n_epochs=n_epochs)
 
+    os.system("rm " + output_directory)
     with open(output_directory, 'wb+') as f:
         pickle.dump(trained_network_weights, f)
  
