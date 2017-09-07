@@ -108,3 +108,7 @@ ENV/
 embed-gcn/bin/
 embed-n2v/emb/
 embed-nf/keras/keras/
+embed-nf/original/figures/
+embed-nf/original/old/
+embed-nf/original/results.pkl
+embed-nf/original/rewire.csv
