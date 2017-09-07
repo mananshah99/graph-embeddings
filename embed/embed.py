@@ -6,13 +6,15 @@ from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join
 
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/embed-n2v')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/common/')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/embed-nf/original/')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-n2v')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-nf/original/')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-sage')
 import settings
 import util
 import embed_n2v as n2v
 import embed_nf_original as nfo
+import embed_sage as es
 
 def embed(train_input_directory,    # directory of train graphs
           train_label_mapping,      # map from train graph name -> label
@@ -24,7 +26,7 @@ def embed(train_input_directory,    # directory of train graphs
           sample = -1,
           selected_nodes = "",
 
-          # nf-original
+          # nf-original and sage
           tmp_dir = "/dfs/scratch0/manans/tmp.csv",
           weights = "/dfs/scratch0/manans/results.pkl",
           train = True,
@@ -40,7 +42,7 @@ def embed(train_input_directory,    # directory of train graphs
                         overwrite = overwrite)
 
     if method == 'gcn':
-        return -1 # not implemented yet, need to include training phase as well
+        return -1 #TODO: complete
 
     if method == 'nf-o' or method == 'nf-original':
         if train:
@@ -52,5 +54,14 @@ def embed(train_input_directory,    # directory of train graphs
                                     weights = weights,
                                     verbose = verbose, overwrite = overwrite)
 
+    if method == 'sage':
+        if train:
+            es.train_sage(train_input_directory, train_label_mapping, n_epochs=n_epochs,
+                            output_directory = weights)
+
+        return es.embed_sage(test_input_directory, test_output_directory,
+                                weights = weights, 
+                                verbose = verbose, overwrite = overwrite)
+
     if method == 'nf-k' or method == 'nf-keras':
-        return -1 # need to implement this 
+        return -1 #TODO: complete
