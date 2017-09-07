@@ -110,8 +110,14 @@ def run(graph_type, nnodes, k, f):
     f.write(means + "\n")
     f.write(stds + "\n")
 
-for i in range(50, 500, 50): # i is nnodes
-    run('er', i, 100, out)
-    run('ba', i, 100, out)
+    print(header)
+    print(means)
+    print(stds)
+    print(">>>------")
+
+for i in range(100, 500, 100): # i is nnodes
+    run('er', i, 2000, out)
+    sys.exit(0)
+    run('ba', i, 2000, out)
 
 out.close()
