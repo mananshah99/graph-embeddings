@@ -106,3 +106,5 @@ ENV/
 *.png
 *.html
 embed-gcn/bin/
+embed-n2v/emb/
+embed-nf/keras/keras/
