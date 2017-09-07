@@ -6,10 +6,10 @@ from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join
 
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-n2v')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-nf/original/')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/embed-sage')
+sys.path.insert(0, '../embed-n2v')
+sys.path.insert(0, '../common')
+sys.path.insert(0, '../embed-nf/original')
+sys.path.insert(0, '../embed-sage')
 import settings
 import util
 import embed_n2v as n2v

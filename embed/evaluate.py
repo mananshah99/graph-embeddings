@@ -10,9 +10,9 @@ then k columns, where each column reports accuracy when a different method is us
 
 import os
 import sys
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/embed-n2v')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/common/')
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/eval/')
+sys.path.insert(0, '../embed-n2v')
+sys.path.insert(0, '../common')
+sys.path.insert(0, '../eval')
 
 import subprocess
 from tqdm import tqdm

@@ -12,7 +12,7 @@ from keras.regularizers import l2
 import sys
 sys.path.insert(0, 'layers')
 
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
+sys.path.insert(0, '../common')
 import settings
 import util
 

@@ -4,7 +4,7 @@ from tqdm import tqdm
 import numpy as np
 from time import time
 
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
+sys.path.insert(0, '../common')
 import settings
 import util
 
