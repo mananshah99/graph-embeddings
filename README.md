@@ -14,7 +14,7 @@ test_graph_output         = 'test_graph_embeddings/'
 
 node2vec_embeddings = \
 	embed(train_input_directory 	        = None, # node2vec is unsupervised
-		 	train_label_mappping 	= None,
+		 	train_label_mapping 	= None,
 		 	test_input_directory	= test_graph_directory,
 		 	test_output_directory	= test_graph_output,
 		 	method 			= 'n2v')
