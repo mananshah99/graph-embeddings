@@ -1,30 +1,63 @@
 # graph-embeddings
 
-Code Listing
+Methods to generate and evaluate *D*-dimensional feature vectors (embeddings) from unimodal, unweighted graphs of arbitrary complexity. A simple example is illustrated below: each call to the embed function returns a map of embeddings and saves the embeddings to a specified directory.
 
-| Name                                 | Description                                                              |
-|--------------------------------------|--------------------------------------------------------------------------|
-| ``common/util.py``                   | General utility functions to simplify file i/o                           |
-| ``common/log.py``                    | Functions to aid in logging program output                               |
-| ``common/settings.py``               | Static variables for file and directory locations                        |
-| ``process/split_full.py``            | Transforms ``protein.links.full.v10.txt`` to 2,031 individual networks   |
-| ``process/create_graph.py``          | Transforms 2,031 individual PPI networks into edgelist representations   |
-| ``embed-n2v/embed_n2v.py``           | Embeds edgelist representations with node2vec uniform random sampling    |
-| ``embed-n2v/process_n2v.py``         | Processes all node2vec embeddings to obtain a standardized histogram     | 
-| ``embed-n2v/visualize_tsne.py``      | Visualizes the processed embeddings in a low-dimensional space with tSNE |
-| ``embed-n2v/evaluate_tree.py``       | Evaluates embedding effectiveness in comparison to the tree of life      |  
-| ``embed-gcn/gen_subgraph.py``        | Generates subgraphs and labels from individual PPI networks              |
-| ``embed-gcn/layers/graph.py``        | Defines the graph convolution layer in Keras form (from Kipf et al)      |
-| ``embed-gcn/utils.py``               | Defines utilities for GCN data extraction and preprocessing              |
-| ``embed-gcn/train_batch.py``         | Trains a GCN on a series of PPI networks                                 |
-| ``eval/tree_eval.py``                | Framework to evaluate vectorized embeddings with permuted node  examples |
-| ``exp-cog/cog.py``                   | Run all COG experiments (inter/intra species + table visualizations)     |
+```py
+import os
+from embed import embed
 
-Relevant Directory Listing
+# Directories with stored graph edgelist representations
+train_graph_directory     = 'train_graphs/'
+train_graph_labels        = {x : x.split('.')[0] for x in os.listdir(train_graph_directory)}
+test_graph_directory      = 'test_graphs/'
+test_graph_output         = 'test_graph_embeddings/'
 
-| Name                                 | Description                                                                |
-|--------------------------------------|----------------------------------------------------------------------------|
-| ``/dfs/scratch0/manans/ppi``         | Raw representations of all PPI networks (including all relevant columns)   | 
-| ``/dfs/scratch0/manans/ppi-uw-graph``| Unweighted PPI graphs (binary indications for edges)                       |
-| ``/dfs/scratch0/manans/ppi-w-graph`` | Weighted PPI graphs (edge weights calculated as sum of columns)            |
-| ``/dfs/scratch0/manans/ppi-uw-n2v``  | Node2vec embeddings of unweighted PPI graphs (dim:128, s:100)              | 
+node2vec_embeddings = \
+	embed(train_input_directory 	        = None, # node2vec is unsupervised
+		 	train_label_mappping 	= None,
+		 	test_input_directory	= test_graph_directory,
+		 	test_output_directory	= test_graph_output,
+		 	method = 'n2v')
+
+fingerprint_embeddings = \
+	embed(train_input_directory 	        = train_graph_directory, # nf is supervised
+		 	train_label_mappping 	= train_graph_labels,
+		 	test_input_directory	= test_graph_directory,
+		 	test_output_directory	= test_graph_output,
+		 	method = 'nf-o')
+
+```
+
+Numerous unique embedding methods were designed and implemented for this task; a brief description of their inner workings is as follows.
+
+## Graph Convolutional Networks (embed-gcn)
+
+Described by Thomas N. Kipf and Max Welling in "Semi-Supervised Classification with Graph Convolutional Networks" (arXiv, 2017). 
+
+> [Graph Convolutional Networks (GCNs) are] a scalable approach for semi-supervised learning on graph-structured data that is based on an efficient variant of convolutional neural networks which operate directly on graphs. The choice of our convolutional architecture [is motivated] via a localized first-order approximation of spectral graph convolutions. [GCNs] scale linearly in the number of graph edges and learn hidden layer representations that encode both local graph structure and features of nodes.
+
+Node feature vectors are learned in a supervised manner from a train set of data, and these node embeddings are aggregated and reduced to a fixed graph-wide embedding for the test phase.  
+
+## Node2Vec (embed-n2v)
+
+Described by Aditya Grover and Jure Leskovec in "node2vec: Scalable Feature Learning for Networks" (arXiv, 2016). 
+
+> [node2vec is] an algorithmic framework for learning continuous feature representations for nodes in networks. [The algorithm] learns a mapping of nodes to a low-dimensional space of features that maximizes the likelihood of preserving network neighborhoods of nodes.
+
+The unsupervised nature of node2vec embeddings allows for the learning of node embeddings during the test phase directly; the node-level embeddings are aggregated to a graph-wide representation immediately afterward. 
+
+## Neural Fingerprint (embed-nf)
+
+Described by David Duvenaud et al. in "Convolutional Networks on Graphs for Learning Molecular Fingerprints" (arXiv, 2015). 
+
+> [The neural fingerprint model] allow[s] end-to-end learning of prediction pipelines whose inputs are graphs of arbitrary size and shape. The architecture present[ed] generalizes standard molecular feature extraction methods based on circular fingerprints. 
+
+Graph feature vectors are learned in a supervised manner, and the saved weights for the networks from the training phase are applied to generate graph embeddings in the test phase. 
+
+## GraphSAGE (embed-sage)
+
+Described by William L. Hamilton, Rex Ying, and Jure Leskovec in "Inductive Representation Learning on Large Graphs" (arXiv, 2017). 
+
+> GraphSAGE [is] a general, inductive framework that leverages node feature information (e.g., text attributes) to efficiently generate node embeddings for previously unseen data. Instead of training individual embeddings for each node, [GraphSAGE] learn[s] a function that generates embeddings by sampling and aggregating features from a node's local neighborhood. 
+
+In a similar manner to the neural fingerprint method, graph vectors are learned in a supervised manner and supervised weights are applied to generate embeddings for unseen graphs in the test phase. 
