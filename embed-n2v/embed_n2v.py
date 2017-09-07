@@ -6,7 +6,7 @@ import sys
 import subprocess
 from tqdm import tqdm
 
-sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/graph-embeddings/common/')
+sys.path.insert(0, '/afs/cs.stanford.edu/u/manans/Desktop/graph-embeddings/common/')
 import settings
 import util
 import numpy as np
