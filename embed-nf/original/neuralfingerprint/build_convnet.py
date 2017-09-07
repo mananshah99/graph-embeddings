@@ -55,6 +55,12 @@ def build_convnet_fingerprint_fun(num_hidden_features=[100, 100], fp_length=512,
         for degree in degrees:
             parser.add_weights(weights_name(layer, degree), (N_prev + num_bond_features(), N_cur))
 
+    try:
+        array_rep_from_edgelist.cache.clear()
+    except Exception as e:
+        print e
+        print "DEBUG: No cache in edgelist representation"
+
     def update_layer(weights, layer, atom_features, bond_features, array_rep, normalize=False):
         def get_weights_func(degree):
             return parser.get(weights, weights_name(layer, degree))
