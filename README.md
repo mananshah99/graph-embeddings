@@ -17,7 +17,7 @@ node2vec_embeddings = \
 		 	train_label_mappping 	= None,
 		 	test_input_directory	= test_graph_directory,
 		 	test_output_directory	= test_graph_output,
-		 	method = 'n2v')
+		 	method 			= 'n2v')
 
 fingerprint_embeddings = \
 	embed(train_input_directory 	        = train_graph_directory, # nf is supervised
